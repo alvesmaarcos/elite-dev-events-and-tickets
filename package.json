@@ -1,0 +1,22 @@
+{
+  "name": "elite-dev-events-and-tickets",
+  "version": "1.0.0",
+  "description": "NodeJS com JavaScript.\r Porquê: Pela conveniência de já utilizar React com JS no Front-End.",
+  "main": "index.js",
+  "workspaces": ["apps/api", "apps/web"],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alvesmaarcos/elite-dev-events-and-tickets.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/alvesmaarcos/elite-dev-events-and-tickets/issues"
+  },
+  "homepage": "https://github.com/alvesmaarcos/elite-dev-events-and-tickets#readme"
+}
