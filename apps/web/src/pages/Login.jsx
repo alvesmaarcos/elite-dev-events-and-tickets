@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export function Login() {
-  const { session, login } = useAuth();
-
+  const { login } = useAuth();
+  const navigate = useNavigate();   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [erro, setErro] = useState(null);
@@ -15,22 +16,12 @@ export function Login() {
     setOcupado(true);
     try {
       await login(email, password);
+      navigate("/");
     } catch {
       setErro("E-mail ou senha invalidos.");
     } finally {
       setOcupado(false);
     }
-  }
-
-  if (session) {
-    return (
-      <div className="page page-narrow">
-        <h1>Voce esta logado</h1>
-        <p className="muted">
-          {session.name} — {session.role}
-        </p>
-      </div>
-    );
   }
 
   return (

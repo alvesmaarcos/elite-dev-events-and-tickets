@@ -83,3 +83,30 @@ button.link {
   border-radius: var(--radius); font-size: .85rem; color: var(--muted);
 }
 .hint-box ul { margin: .4rem 0 0; padding-left: 1.2rem; }
+
+.search-bar { display: flex; gap: .5rem; margin: 1rem 0 1.5rem; }
+.search-bar input { flex: 1; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+  padding: 1rem;
+  color: var(--ink);
+  text-align: left;
+  display: block;
+  cursor: pointer;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.catalog-card { width: 100%; font: inherit; }
+
+.price { color: var(--accent); font-weight: 600; }

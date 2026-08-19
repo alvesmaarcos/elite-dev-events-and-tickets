@@ -3,11 +3,11 @@ import { prisma } from "../src/lib/prisma";
 
 async function criarUsuarios() {
   const jaExiste = await prisma.user.findUnique({
-    where: { email: "organizador@elite.dev" },
+    where: { email: "organizador@gmail.com" },
   });
   if (jaExiste) {
     console.log("Usuarios ja existem, pulando.");
-    return;
+    return jaExiste;
   }
 
   const senha = await bcrypt.hash("12345678", 10);
@@ -22,14 +22,44 @@ async function criarUsuarios() {
   });
 
   console.log("Usuarios criados (senha: 12345678):");
-  console.log("  organizador@elite.dev  (ORGANIZER)");
-  console.log("  cliente1@elite.dev     (CLIENT)");
-  console.log("  cliente2@elite.dev     (CLIENT)");
-  console.log("  portaria@elite.dev     (GATE)");
+  console.log("  organizador@gmail.com  (ORGANIZER)");
+  console.log("  cliente1@gmail.com     (CLIENT)");
+  console.log("  cliente2@gmail.com     (CLIENT)");
+  console.log("  portaria@gmail.com     (GATE)");
+
+  return prisma.user.findUniqueOrThrow({
+    where: { email: "organizador@gmail.com" },
+  });
+}
+
+async function criarEvento(organizerId: string) {
+  const jaExiste = await prisma.event.findFirst({
+    where: { organizerId, externalId: "mock-1" },
+  });
+  if (jaExiste) return;
+
+  const dataDoEvento = new Date();
+  dataDoEvento.setDate(dataDoEvento.getDate() + 14);
+
+  await prisma.event.create({
+    data: {
+      title: "Filme 2",
+      description: "Filme com pipoca.",
+      externalSource: "tmdb",
+      externalId: "mock-1",
+      date: dataDoEvento,
+      location: "Cine Centro, Sala 3",
+      price: 35,
+      organizerId,
+    },
+  });
+
+  console.log("Evento de exemplo criado.");
 }
 
 async function main() {
-  await criarUsuarios();
+  const organizador = await criarUsuarios();
+  await criarEvento(organizador.id);
   console.log("Seed concluido.");
 }
 

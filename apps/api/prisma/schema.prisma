@@ -25,5 +25,21 @@ model User {
   password  String
   name      String
   role      Role
+  events    Event[]
   createdAt DateTime @default(now())
 }
+model Event {
+  id             String   @id @default(cuid())
+  title          String
+  description    String?
+  posterUrl      String?
+  externalSource String?
+  externalId     String?
+  date           DateTime
+  location       String
+  price          Float
+  organizerId    String
+  organizer      User     @relation(fields: [organizerId], references: [id])
+  createdAt      DateTime @default(now())
+}
+
