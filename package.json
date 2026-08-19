@@ -1,38 +1,25 @@
 {
   "name": "elite-dev-events-and-tickets",
   "version": "1.0.0",
-  "description": "NodeJS com JavaScript.\r Porquê: Pela conveniência de já utilizar React com JS no Front-End.",
-  "main": "index.js",
+  "private": true,
+  "description": "Plataforma de eventos e ingressos - Desafio Elite Dev (Verzel)",
   "workspaces": [
     "apps/api",
     "apps/web"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev:api": "npm run dev --workspace apps/api",
+    "dev:web": "npm run dev --workspace apps/web"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/alvesmaarcos/elite-dev-events-and-tickets.git"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/alvesmaarcos/elite-dev-events-and-tickets/issues"
-  },
-  "homepage": "https://github.com/alvesmaarcos/elite-dev-events-and-tickets#readme",
-  "dependencies": {
-    "@prisma/client": "^7.9.1",
-    "express": "^5.2.1"
-  },
-  "devDependencies": {
-    "@types/node": "^26.2.0",
-    "dotenv": "^17.4.2",
-    "prisma": "^7.9.1"
-  },
   "allowScripts": {
-    "@prisma/engines@6.12.0": true,
-    "prisma@6.12.0": true
+    "prisma@7.9.1": true,
+    "@prisma/client@7.9.1": true,
+    "@prisma/engines@7.9.1": true,
+    "esbuild@0.28.2": true
   }
 }
