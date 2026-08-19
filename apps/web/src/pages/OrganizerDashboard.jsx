@@ -15,6 +15,8 @@ export function OrganizerDashboard() {
   const [price, setPrice] = useState(20);
   const [erro, setErro] = useState(null);
   const [ocupado, setOcupado] = useState(false);
+  const [roomRows, setRoomRows] = useState(8);
+  const [roomSeatsPerRow, setRoomSeatsPerRow] = useState(12);
 
   function carregarMeusEventos() {
     if (token) api.myEvents(token).then(setMeusEventos);
@@ -43,6 +45,8 @@ export function OrganizerDashboard() {
         date: new Date(date).toISOString(),
         location,
         price: Number(price),
+        roomRows: Number(roomRows),
+        roomSeatsPerRow: Number(roomSeatsPerRow),
       });
       setSelecionado(null);
       setLocation("");
@@ -118,6 +122,34 @@ export function OrganizerDashboard() {
               />
             </label>
             <label>
+              Fileiras da sala
+              <input
+                type="number"
+                min={1}
+                max={26}
+                value={roomRows}
+                onChange={(e) => setRoomRows(e.target.value)}
+                required
+              />
+            </label>
+
+            <label>
+              Assentos por fileira
+              <input
+                type="number"
+                min={1}
+                max={60}
+                value={roomSeatsPerRow}
+                onChange={(e) => setRoomSeatsPerRow(e.target.value)}
+                required
+              />
+            </label>
+
+            <p className="muted small">
+              Total: {Number(roomRows) * Number(roomSeatsPerRow)} poltronas.
+            </p>
+
+            <label>
               Preco do ingresso (R$)
               <input
                 type="number"
@@ -145,6 +177,7 @@ export function OrganizerDashboard() {
               <h4>{ev.title}</h4>
               <p className="muted small">{ev.location}</p>
               <p className="muted small">
+              <p className="muted small">{ev.available}/{ev.capacity} disponiveis</p>
                 {new Date(ev.date).toLocaleString("pt-BR")}
               </p>
             </div>

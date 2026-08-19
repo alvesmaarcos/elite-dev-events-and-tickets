@@ -25,12 +25,21 @@ export const api = {
 
   listEvents: (q) =>
     request(`/events${q ? `?q=${encodeURIComponent(q)}` : ""}`),
-  getEvent: (id) => request(`/events/${id}`),
-  myEvents: (token) => request("/events/mine/list", { token }),
+  
+  getEvent: (id) => 
+    request(`/events/${id}`),
+
+  myEvents: (token) => 
+    request("/events/mine/list", { token }),
+
   createEvent: (token, payload) =>
     request("/events", { method: "POST", body: payload, token }),
 
   searchCatalog: (token, q) =>
     request(`/catalog/tmdb?q=${encodeURIComponent(q)}`, { token }),
+
+  getSeats: (eventId) => 
+    request(`/events/${eventId}/seats`),
+
 };
 

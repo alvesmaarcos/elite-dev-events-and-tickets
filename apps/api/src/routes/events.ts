@@ -5,6 +5,22 @@ import { requireAuth, requireRole } from "../middleware/auth";
 
 export const eventsRouter = Router();
 
+async function comDisponibilidade(event: {
+  id: string;
+  roomRows: number;
+  roomSeatsPerRow: number;
+}) {
+  const available = await prisma.seat.count({
+    where: { eventId: event.id, status: "AVAILABLE" },
+  });
+
+  return {
+    ...event,
+    capacity: event.roomRows * event.roomSeatsPerRow,
+    available,
+  };
+}
+
 // publico
 
 eventsRouter.get("/", async (req, res) => {
@@ -22,8 +38,18 @@ eventsRouter.get("/", async (req, res) => {
     orderBy: { date: "asc" },
   });
 
-  res.json(events);
+  res.json(await Promise.all(events.map(comDisponibilidade)));
 });
+
+eventsRouter.get("/:id", async (req, res) => {
+  const event = await prisma.event.findUnique({ where: { id: req.params.id } });
+  if (!event) {
+    res.status(404).json({ error: "Evento nao encontrado." });
+    return;
+  }
+  res.json(await comDisponibilidade(event));
+});
+
 
 eventsRouter.get("/mine/list", requireAuth, requireRole("ORGANIZER"), async (req, res) => {
   const events = await prisma.event.findMany({
@@ -42,6 +68,29 @@ eventsRouter.get("/:id", async (req, res) => {
   res.json(event);
 });
 
+eventsRouter.get("/:id/seats", async (req, res) => {
+  const event = await prisma.event.findUnique({ where: { id: req.params.id } });
+  if (!event) {
+    res.status(404).json({ error: "Evento nao encontrado." });
+    return;
+  }
+
+  const seats = await prisma.seat.findMany({
+    where: { eventId: event.id },
+    orderBy: [{ row: "asc" }, { number: "asc" }],
+  });
+
+  res.json(
+    seats.map((assento) => ({
+      label: assento.label,
+      row: assento.row,
+      number: assento.number,
+      status: assento.status,
+    }))
+  );
+});
+
+
 // criacao
 
 const createEventSchema = z.object({
@@ -58,8 +107,7 @@ const createEventSchema = z.object({
 eventsRouter.post("/", requireAuth, requireRole("ORGANIZER"), async (req, res) => {
   const parsed = createEventSchema.safeParse(req.body);
   if (!parsed.success) {
-    // Dizer QUAL campo falhou, e nao so que "algo" falhou. Sem isso, depurar
-    // um 400 vira adivinhacao -- especialmente testando pelo Postman.
+ 
     res.status(400).json({
       error: "Dados do evento invalidos.",
       detalhes: parsed.error.issues.map((problema) => ({

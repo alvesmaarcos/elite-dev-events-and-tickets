@@ -41,5 +41,25 @@ model Event {
   organizerId    String
   organizer      User     @relation(fields: [organizerId], references: [id])
   createdAt      DateTime @default(now())
+  roomRows        Int
+  roomSeatsPerRow Int
+  seats           Seat[]
 }
 
+enum SeatStatus {
+  AVAILABLE
+  HELD
+  SOLD
+}
+
+model Seat {
+  id      String     @id @default(cuid())
+  eventId String
+  event   Event      @relation(fields: [eventId], references: [id])
+  row     String
+  number  Int
+  label   String
+  status  SeatStatus @default(AVAILABLE)
+
+  @@unique([eventId, label])
+}
