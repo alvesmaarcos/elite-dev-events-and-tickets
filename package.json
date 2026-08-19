@@ -15,11 +15,5 @@
     "type": "git",
     "url": "git+https://github.com/alvesmaarcos/elite-dev-events-and-tickets.git"
   },
-  "license": "ISC",
-  "allowScripts": {
-    "prisma@7.9.1": true,
-    "@prisma/client@7.9.1": true,
-    "@prisma/engines@7.9.1": true,
-    "esbuild@0.28.2": true
-  }
+  "license": "ISC"
 }

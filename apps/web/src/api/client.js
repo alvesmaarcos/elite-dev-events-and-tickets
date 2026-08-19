@@ -19,4 +19,8 @@ async function request(path, { method = "GET", body, token } = {}) {
   return data;
 }
 
-export const api = {};
+export const api = {
+    login: (email, password) =>
+        request("/auth/login", { method: "POST", body: { email, password } 
+    }),
+};

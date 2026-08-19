@@ -74,3 +74,12 @@ button.link {
 .small { font-size: .85rem; }
 .error { color: var(--error); font-size: .9rem; }
 .button-row { display: flex; gap: .75rem; margin-top: 1rem; }
+
+.user-chip { display: inline-flex; align-items: center; gap: .75rem; color: var(--muted); font-size: .9rem; }
+.user-chip em { color: var(--accent); font-style: normal; }
+
+.hint-box {
+  margin-top: 2rem; padding: 1rem; background: var(--surface);
+  border-radius: var(--radius); font-size: .85rem; color: var(--muted);
+}
+.hint-box ul { margin: .4rem 0 0; padding-left: 1.2rem; }
