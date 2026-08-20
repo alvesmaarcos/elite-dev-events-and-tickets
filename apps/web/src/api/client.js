@@ -64,5 +64,16 @@ export const api = {
 
     meusIngressos: (token) => request("/reservations/mine", { token }),
 
+    // --- portaria ---
+    validarIngresso: (token, payload, eventId) =>
+      request("/gate/validate", {
+        method: "POST",
+        body: { payload, eventId },
+        token,
+      }),
+
+    // publica: quem recebeu o link compartilhado nao tem conta
+    ingressoCompartilhado: (code) => request(`/tickets/share/${code}`),
+
 };
 

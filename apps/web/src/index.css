@@ -165,3 +165,26 @@ button.link {
   font-weight: 700;
   color: var(--accent);
 }
+
+/* --- portaria --- */
+.leitor-qr { margin: 1rem 0; max-width: 340px; }
+
+/* Cores fortes e bloco grande: quem trabalha na portaria olha a tela de
+   relance, com fila esperando. Verde/amarelo/vermelho e uma frase curta em
+   negrito sao lidos mais rapido que qualquer texto explicativo. */
+.gate-result {
+  margin-top: 1.5rem;
+  padding: 1.2rem;
+  border-radius: var(--radius);
+  text-align: center;
+}
+.gate-ok     { background: rgba(111,174,111,.15); border: 2px solid #6fae6f; }
+.gate-erro   { background: rgba(209,106,90,.15);  border: 2px solid var(--error); }
+.gate-alerta { background: rgba(217,164,65,.15);  border: 2px solid #d9a441; }
+
+.share-input {
+  width: 100%;
+  margin-top: .6rem;
+  font-size: .7rem;
+  text-align: center;
+}

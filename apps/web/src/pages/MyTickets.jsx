@@ -50,6 +50,16 @@ export function MyTickets() {
                 <p className="muted small">
                   {rotuloStatus[ingresso.status] || ingresso.status}
                 </p>
+
+                {/* window.location.origin monta o link com o endereco atual:
+                    funciona em localhost e no dominio publicado, sem mudar
+                    nada. O onFocus seleciona tudo para copiar com um Ctrl+C. */}
+                <input
+                  readOnly
+                  className="share-input"
+                  value={`${window.location.origin}/ingresso/${ingresso.code}`}
+                  onFocus={(e) => e.target.select()}
+                />
               </div>
             ))}
           </div>
