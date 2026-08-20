@@ -27,6 +27,7 @@ model User {
   role      Role
   events    Event[]
   createdAt DateTime @default(now())
+  reservations Reservation[]
 }
 model Event {
   id             String   @id @default(cuid())
@@ -44,6 +45,7 @@ model Event {
   roomRows        Int
   roomSeatsPerRow Int
   seats           Seat[]
+  reservations Reservation[]
 }
 
 enum SeatStatus {
@@ -62,6 +64,36 @@ model Seat {
   status  SeatStatus @default(AVAILABLE)
   holdExpiresAt DateTime?
   holdByUserId  String?
+  ticket Ticket?
   
   @@unique([eventId, label])
+}
+
+enum TicketStatus {
+  VALID
+  USED
+  CANCELED
+}
+
+model Reservation {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  clientId  String
+  client    User     @relation(fields: [clientId], references: [id])
+  createdAt DateTime @default(now())
+  tickets   Ticket[]
+}
+
+model Ticket {
+  id            String       @id @default(cuid())
+  reservationId String
+  reservation   Reservation  @relation(fields: [reservationId], references: [id])
+  seatId        String       @unique
+  seat          Seat         @relation(fields: [seatId], references: [id])
+  code          String       @unique
+  signature     String
+  status        TicketStatus @default(VALID)
+  usedAt        DateTime?
+  createdAt     DateTime     @default(now())
 }

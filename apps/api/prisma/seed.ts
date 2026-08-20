@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../src/lib/prisma";
 import { buildSeatGrid } from "../src/domain/seats";
-
+import crypto from "crypto";
 
 async function criarUsuarios() {
   const jaExiste = await prisma.user.findUnique({
@@ -71,9 +71,47 @@ async function criarEvento(organizerId: string) {
   console.log(`Evento de exemplo criado (sala ${roomRows}x${roomSeatsPerRow}).`);
 }
 
+async function criarIngressoDeExemplo() {
+  const event = await prisma.event.findFirst({ where: { externalId: "mock-1" } });
+  if (!event) return;
+
+  const jaExiste = await prisma.reservation.findFirst({ where: { eventId: event.id } });
+  if (jaExiste) return;
+
+  const cliente = await prisma.user.findUniqueOrThrow({
+    where: { email: "cliente1@gmail.com" },
+  });
+
+  const assento = await prisma.seat.findFirstOrThrow({
+    where: { eventId: event.id, label: "A1" },
+  });
+
+  await prisma.seat.update({
+    where: { id: assento.id },
+    data: { status: "SOLD" },
+  });
+
+  const reservation = await prisma.reservation.create({
+    data: { eventId: event.id, clientId: cliente.id },
+  });
+
+  const code = crypto.randomUUID();
+  const signature = crypto
+    .createHmac("sha256", process.env.QR_SECRET || "dev-qr-secret-trocar-em-producao")
+    .update(code)
+    .digest("hex");
+
+  await prisma.ticket.create({
+    data: { reservationId: reservation.id, seatId: assento.id, code, signature },
+  });
+
+  console.log(`Ingresso de exemplo: poltrona A1, codigo ${code}`);
+}
+
 async function main() {
   const organizador = await criarUsuarios();
   await criarEvento(organizador.id);
+  await criarIngressoDeExemplo();          
   console.log("Seed concluido.");
 }
 
