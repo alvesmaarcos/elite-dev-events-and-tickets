@@ -38,8 +38,21 @@ export const api = {
   searchCatalog: (token, q) =>
     request(`/catalog/tmdb?q=${encodeURIComponent(q)}`, { token }),
 
-  getSeats: (eventId) => 
-    request(`/events/${eventId}/seats`),
+  getSeats: (eventId, token) =>
+  request(`/events/${eventId}/seats`, token ? { token } : {}),
 
+  holdSeats: (token, eventId, seatLabels) =>
+    request(`/events/${eventId}/seats/hold`, {
+      method: "POST",
+      body: { seatLabels },
+      token,
+    }),
+
+  releaseSeats: (token, eventId, seatLabels) =>
+    request(`/events/${eventId}/seats/release`, {
+      method: "POST",
+      body: { seatLabels },
+      token,
+    }),
 };
 

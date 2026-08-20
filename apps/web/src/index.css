@@ -153,3 +153,5 @@ button.link {
   margin-top: 1.5rem; padding: 1rem;
   background: var(--surface); border-radius: var(--radius);
 }
+
+.hold-timer { font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }

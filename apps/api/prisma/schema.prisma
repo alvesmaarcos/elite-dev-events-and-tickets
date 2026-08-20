@@ -60,6 +60,8 @@ model Seat {
   number  Int
   label   String
   status  SeatStatus @default(AVAILABLE)
-
+  holdExpiresAt DateTime?
+  holdByUserId  String?
+  
   @@unique([eventId, label])
 }
