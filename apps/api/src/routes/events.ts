@@ -53,7 +53,7 @@ eventsRouter.get("/", async (req, res) => {
 eventsRouter.get("/:id", async (req, res) => {
   const event = await prisma.event.findUnique({ where: { id: String(req.params.id) } });
   if (!event) {
-    res.status(404).json({ error: "Evento nao encontrado." });
+    res.status(404).json({ error: "Sessao nao encontrada." });
     return;
   }
   res.json(await comDisponibilidade(event));
@@ -90,7 +90,7 @@ eventsRouter.get("/mine/list", requireAuth, requireRole("ORGANIZER"), async (req
 eventsRouter.get("/:id/seats", optionalAuth, async (req, res) => {
   const event = await prisma.event.findUnique({ where: { id: String(req.params.id) } });
   if (!event) {
-    res.status(404).json({ error: "Evento nao encontrado." });
+    res.status(404).json({ error: "Sessao nao encontrada." });
     return;
   }
 
@@ -143,7 +143,7 @@ eventsRouter.post("/", requireAuth, requireRole("ORGANIZER"), async (req, res) =
   if (!parsed.success) {
  
     res.status(400).json({
-      error: "Dados do evento invalidos.",
+      error: "Dados da sessao invalidos.",
       detalhes: parsed.error.issues.map((problema) => ({
         campo: problema.path.join(".") || "(corpo da requisicao)",
         motivo: problema.message,
@@ -204,15 +204,15 @@ eventsRouter.patch("/:id", requireAuth, requireRole("ORGANIZER"), async (req, re
   const event = await prisma.event.findUnique({ where: { id: String(req.params.id) } });
 
   if (!event) {
-    res.status(404).json({ error: "Evento nao encontrado." });
+    res.status(404).json({ error: "Sessao nao encontrada." });
     return;
   }
   if (event.organizerId !== req.user!.id) {
-    res.status(403).json({ error: "Voce nao organiza este evento." });
+    res.status(403).json({ error: "Voce nao organiza esta sessao." });
     return;
   }
   if (event.canceledAt) {
-    res.status(409).json({ error: "Evento cancelado nao pode ser editado." });
+    res.status(409).json({ error: "Sessao cancelada nao pode ser editada." });
     return;
   }
 
@@ -284,15 +284,15 @@ eventsRouter.post("/:id/cancel", requireAuth, requireRole("ORGANIZER"), async (r
   const event = await prisma.event.findUnique({ where: { id: String(req.params.id) } });
 
   if (!event) {
-    res.status(404).json({ error: "Evento nao encontrado." });
+    res.status(404).json({ error: "Sessao nao encontrada." });
     return;
   }
   if (event.organizerId !== req.user!.id) {
-    res.status(403).json({ error: "Voce nao organiza este evento." });
+    res.status(403).json({ error: "Voce nao organiza esta sessao." });
     return;
   }
   if (event.canceledAt) {
-    res.status(409).json({ error: "Este evento ja esta cancelado." });
+    res.status(409).json({ error: "Esta sessao ja esta cancelada." });
     return;
   }
 

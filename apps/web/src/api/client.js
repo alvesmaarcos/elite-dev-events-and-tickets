@@ -23,6 +23,10 @@ export const api = {
   login: (email, password) =>
     request("/auth/login", { method: "POST", body: { email, password } }),
 
+  // Posteres da vitrine da pagina inicial. Rota publica: quem chega no site
+  // ainda nao tem conta.
+  vitrine: () => request("/catalog/showcase"),
+
   listEvents: (q) =>
     request(`/events${q ? `?q=${encodeURIComponent(q)}` : ""}`),
   

@@ -42,7 +42,7 @@ seatsRouter.post("/hold", requireAuth, requireRole("CLIENT"), async (req, res) =
 
   const event = await prisma.event.findUnique({ where: { id: eventId } });
   if (!event) {
-    res.status(404).json({ error: "Evento nao encontrado." });
+    res.status(404).json({ error: "Sessao nao encontrada." });
     return;
   }
 

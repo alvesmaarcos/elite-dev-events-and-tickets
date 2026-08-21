@@ -130,3 +130,43 @@ export async function fetchCatalog(
     totalPages: Math.min(data.total_pages ?? 1, 500),
   };
 }
+
+/**
+ * Posteres para a vitrine da landing page.
+ *
+ * E so decoracao: quem chega no site sem conta ve uma parede de posteres
+ * reais em vez de um fundo chapado. Por isso ela pode ser servida a qualquer
+ * um (nao exige login) e por isso guardamos o resultado em memoria -- a
+ * pagina inicial e a mais visitada de todas, e nao ha motivo para consultar
+ * a TMDb a cada visita quando "em cartaz" muda uma vez por semana.
+ */
+const UMA_HORA = 60 * 60 * 1000;
+
+let vitrineEmCache: { posters: string[]; expiraEm: number } | null = null;
+
+export async function fetchShowcasePosters(): Promise<string[]> {
+  if (vitrineEmCache && vitrineEmCache.expiraEm > Date.now()) {
+    return vitrineEmCache.posters;
+  }
+
+  // Duas paginas dao uns 40 posteres: o suficiente para a parede nao repetir
+  // o mesmo filme lado a lado.
+  const [primeira, segunda] = await Promise.all([
+    fetchCatalog("", 1),
+    fetchCatalog("", 2),
+  ]);
+
+  const posters = [...primeira.items, ...segunda.items]
+    .map((filme) => filme.posterUrl)
+    .filter((url): url is string => Boolean(url))
+    // Na parede o poster aparece pequeno e por tras de um veu escuro: pedir
+    // a versao de 500px de largura seria baixar varios megabytes para uma
+    // textura de fundo. A TMDb serve o mesmo arquivo em tamanhos menores
+    // trocando um pedaco da URL.
+    .map((url) => url.replace("/w500/", "/w342/"))
+    .slice(0, 30);
+
+  vitrineEmCache = { posters, expiraEm: Date.now() + UMA_HORA };
+
+  return posters;
+}

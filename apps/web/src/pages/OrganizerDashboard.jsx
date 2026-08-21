@@ -338,7 +338,7 @@ export function OrganizerDashboard() {
       )}
 
       <section>
-        <h2>Meus eventos publicados</h2>
+        <h2>Minhas sessoes publicadas</h2>
         <div className="grid">
           {meusEventos.map((ev) => (
             <div key={ev.id} className="card">
@@ -464,7 +464,7 @@ export function OrganizerDashboard() {
                       className="danger"
                       onClick={() => cancelarEvento(ev)}
                     >
-                      Cancelar evento
+                      Cancelar sessao
                     </button>
                   </div>
                 )

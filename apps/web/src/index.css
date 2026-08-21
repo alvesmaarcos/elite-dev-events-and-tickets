@@ -418,3 +418,192 @@ button.danger:hover { background: rgba(209,106,90,.12); }
   display: inline-block;
   line-height: 0;
 }
+
+/* =========================================================
+   Pagina inicial (landing)
+   ========================================================= */
+
+/* --- o palco --- */
+.hero {
+  position: relative;
+  overflow: hidden;          /* segura a parede girada dentro do card */
+  margin-top: 2rem;
+  border: 1px solid var(--surface-2);
+  border-radius: 16px;
+  background: var(--surface); /* fundo se a vitrine nao carregar */
+  min-height: 440px;
+  display: flex;
+  align-items: center;
+}
+
+/* Vela sobre os posteres para o texto continuar legivel. O degrade e mais
+   forte na esquerda, onde fica o conteudo, e abre na direita, onde a parede
+   deve aparecer. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    100deg,
+    var(--bg) 24%,
+    rgba(20, 17, 15, .82) 58%,
+    rgba(20, 17, 15, .45) 100%
+  );
+}
+
+/* --- a parede de posteres --- */
+.parede {
+  position: absolute;
+  /* Maior que o card e inclinada: assim a rotacao nunca deixa canto vazio a
+     mostra, e as colunas cortadas sugerem que a parede continua. */
+  inset: -25%;
+  display: flex;
+  gap: .6rem;
+  transform: rotate(-10deg) scale(1.1);
+  opacity: .5;
+  /* Sem isto as colunas seriam esticadas ate a altura da parede e o flex
+     espremeria os posteres em faixas de poucos pixels. A coluna precisa ser
+     MAIOR que a area visivel -- e o que da margem para ela rolar. */
+  align-items: flex-start;
+}
+
+.parede-coluna {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  /* A lista vem duplicada do JS: rolar exatamente metade recomeca no mesmo
+     ponto visual, e o loop fica sem emenda. */
+  animation: parede-sobe var(--duracao, 60s) linear infinite;
+}
+.parede-coluna.desce { animation-name: parede-desce; }
+
+.parede-coluna img {
+  width: 100%;
+  flex-shrink: 0;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+}
+
+@keyframes parede-sobe {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-50%); }
+}
+@keyframes parede-desce {
+  from { transform: translateY(-50%); }
+  to   { transform: translateY(0); }
+}
+
+/* Movimento de fundo continuo e justamente o que incomoda quem tem
+   sensibilidade vestibular. A parede continua, parada. */
+@media (prefers-reduced-motion: reduce) {
+  .parede-coluna { animation: none; }
+}
+
+/* --- o texto --- */
+.hero-conteudo {
+  position: relative;
+  z-index: 2;
+  max-width: 34rem;
+  padding: 3rem 2.4rem;
+}
+
+.hero-marca {
+  margin: 0 0 .9rem;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .34em;
+  text-indent: .34em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5.5vw, 3rem);
+  line-height: 1.08;
+  letter-spacing: -.02em;
+}
+
+.hero-texto {
+  margin: 1rem 0 0;
+  max-width: 44ch;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.hero-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.8rem;
+}
+
+.botao-grande { padding: .75rem 1.3rem; font-size: .95rem; }
+
+.botao-vazado {
+  background: transparent;
+  border: 1px solid var(--muted);
+  color: var(--ink);
+}
+.botao-vazado:hover {
+  background: rgba(232, 161, 58, .12);
+  border-color: var(--accent);
+  color: var(--ink);
+  filter: none;
+}
+
+/* --- como funciona --- */
+.passos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+.passos > div {
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+  padding: 1.2rem;
+}
+.passos h3 { font-size: 1rem; margin: .7rem 0 .35rem; }
+.passos p { margin: 0; line-height: 1.5; }
+
+.passo-numero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #14110f;
+  font-weight: 700;
+  font-size: .85rem;
+}
+
+/* --- previa do que esta em cartaz --- */
+.previa-topo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.previa-topo h2 { margin: 0; }
+
+/* Na previa o card inteiro e um link; sem isto o titulo sairia laranja e
+   sublinhado como qualquer <a>. */
+.previa .filme-card { color: var(--ink); text-decoration: none; }
+.previa .filme-info p { margin: 0; }
+
+@media (max-width: 640px) {
+  .hero { min-height: 0; }
+  .hero-conteudo { padding: 2.2rem 1.4rem; }
+  /* Na tela estreita o texto ocupa tudo: a parede vira so uma textura ao
+     fundo, senao ela briga com a leitura. */
+  .hero::before { background: rgba(20, 17, 15, .8); }
+  .parede { opacity: .35; }
+}

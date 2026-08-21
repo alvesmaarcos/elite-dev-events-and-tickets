@@ -21,6 +21,12 @@ export function AuthProvider({ children }) {
     setSession(dados.user);
     setToken(dados.token);
     localStorage.setItem("elite.session", JSON.stringify(dados));
+
+    // Devolvido para que a tela de login saiba PARA ONDE mandar a pessoa:
+    // o "inicio" de um organizador nao e o mesmo de um cliente. O estado do
+    // contexto ainda nao esta atualizado nesse instante, entao quem chamou
+    // precisa receber o usuario de volta.
+    return dados.user;
   }
 
   function logout() {

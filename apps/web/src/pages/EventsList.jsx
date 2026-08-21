@@ -33,7 +33,7 @@ export function EventsList() {
 
   return (
     <div className="page">
-      <h1>Sessoes disponiveis</h1>
+      <h1>Filmes em cartaz</h1>
 
       <form
         className="search-bar"
@@ -43,7 +43,7 @@ export function EventsList() {
         }}
       >
         <input
-          placeholder="Buscar por titulo ou local..."
+          placeholder="Buscar por filme ou local..."
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -51,7 +51,7 @@ export function EventsList() {
       </form>
 
       {carregando && <p>Carregando...</p>}
-      {!carregando && events.length === 0 && <p>Nenhuma sessao encontrada.</p>}
+      {!carregando && events.length === 0 && <p>Nenhum filme em cartaz no momento.</p>}
 
       <div className="grid">
         {events.map((ev) => (

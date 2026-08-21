@@ -1,6 +1,7 @@
 import { Link, Route, Routes, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Login } from "./pages/Login";
+import { Landing } from "./pages/Landing";
 import { EventsList } from "./pages/EventsList";
 import { EventDetail } from "./pages/EventDetail";
 import { OrganizerDashboard } from "./pages/OrganizerDashboard";
@@ -22,7 +23,7 @@ function Nav() {
       <Link to="/" className="brand">Elite Tickets</Link>
 
       <nav>
-        <Link to="/">Eventos</Link>
+        <Link to="/filmes">Em cartaz</Link>
         {session?.role === "CLIENT" && (
           <Link to="/meus-ingressos">Meus ingressos</Link>
         )}
@@ -50,7 +51,11 @@ export default function App() {
       <Nav />
       <main>
         <Routes>
-          <Route path="/" element={<EventsList />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/filmes" element={<EventsList />} />
+          <Route path="/filmes/:id" element={<EventDetail />} />
+          {/* O endereco antigo continua valendo: quem tiver o link salvo de
+              uma sessao nao pode cair num 404 por causa da renomeacao. */}
           <Route path="/eventos/:id" element={<EventDetail />} />
           <Route path="/organizador" element={<OrganizerDashboard />} />
           <Route path="/meus-ingressos" element={<MyTickets />} />
