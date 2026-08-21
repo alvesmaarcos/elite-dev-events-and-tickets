@@ -826,3 +826,65 @@ button.danger:hover { background: rgba(209,106,90,.12); }
   .compra-poster { width: 76px; }
   .sinopse { -webkit-line-clamp: 3; }
 }
+
+/* =========================================================
+   Portaria: escolha da sessao e leitura
+   ========================================================= */
+
+.lista-sessoes {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  margin-top: 1.2rem;
+}
+
+/* Alvo grande de toque: a portaria opera de pe, com o celular numa mao. */
+.sessao-opcao {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+  width: 100%;
+  padding: .9rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+}
+.sessao-opcao:hover { border-color: var(--accent); }
+.sessao-opcao strong { font-size: 1rem; }
+
+/* Qual porta e esta. Fica em destaque permanente porque validar o ingresso
+   contra a sessao errada e justamente o erro que este fluxo evita. */
+.portaria-sessao {
+  margin: 1rem 0 1.2rem;
+  padding: .9rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+}
+.portaria-sessao strong { display: block; }
+.portaria-sessao p { margin: .2rem 0 .5rem; }
+
+.portaria-contador {
+  color: var(--accent) !important;
+  font-weight: 600;
+  font-size: .85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.portaria-metricas { margin-top: .9rem; text-align: center; }
+
+/* A sessao correta do ingresso recusado. Emoldurada para nao se perder no
+   meio do bloco colorido do resultado. */
+.gate-outra-sessao {
+  margin-top: .8rem;
+  padding: .7rem;
+  background: rgba(0, 0, 0, .22);
+  border-radius: 6px;
+}
+.gate-outra-sessao p { margin: .15rem 0; }

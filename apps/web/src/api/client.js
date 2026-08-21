@@ -107,6 +107,9 @@ export const api = {
         token,
       }),
 
+    metricasDaPortaria: (token, eventId) =>
+      request(`/gate/metricas/${eventId}`, { token }),
+
     // publica: quem recebeu o link compartilhado nao tem conta
     ingressoCompartilhado: (code) => request(`/tickets/share/${code}`),
 
