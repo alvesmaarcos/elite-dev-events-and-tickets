@@ -24,6 +24,26 @@ reservationsRouter.post("/", requireAuth, requireRole("CLIENT"), async (req, res
   const { eventId, seatLabels, outcome } = parsed.data;
   const userId = req.user!.id;
 
+  // Sessao encerrada nao aceita mais pagamento -- e o que mantem o relatorio
+  // final estavel depois de emitido. A recusa continua permitida, para o
+  // cliente conseguir liberar poltronas que ainda estivessem seguradas.
+  if (outcome === "approve") {
+    const event = await prisma.event.findUnique({ where: { id: eventId } });
+
+    if (!event) {
+      res.status(404).json({ error: "Evento nao encontrado." });
+      return;
+    }
+    if (event.closedAt) {
+      res.status(409).json({ error: "Esta sessao ja foi encerrada." });
+      return;
+    }
+    if (event.canceledAt) {
+      res.status(409).json({ error: "Esta sessao foi cancelada." });
+      return;
+    }
+  }
+
   // ---------- pagamento recusado ----------
   if (outcome === "decline") {
     await prisma.seat.updateMany({

@@ -49,6 +49,9 @@ model Event {
   // Guardamos a DATA, nao um boolean: se esta vazio nao foi cancelado, se
   // esta preenchido foi cancelado E sabemos quando. Mesmo padrao do usedAt.
   canceledAt      DateTime?
+  // Evento encerrado pelo organizador: nao aceita mais compras nem
+  // validacoes, e o relatorio final passa a ser estavel.
+  closedAt        DateTime?
 }
 
 enum SeatStatus {

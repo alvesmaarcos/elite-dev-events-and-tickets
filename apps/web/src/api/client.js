@@ -90,5 +90,11 @@ export const api = {
     cancelarEvento: (token, eventId) =>
       request(`/events/${eventId}/cancel`, { method: "POST", token }),
 
+    encerrarEvento: (token, eventId) =>
+      request(`/events/${eventId}/close`, { method: "POST", token }),
+
+    relatorioDoEvento: (token, eventId) =>
+      request(`/events/${eventId}/report`, { token }),
+
 };
 
