@@ -54,5 +54,15 @@ export const api = {
       body: { seatLabels },
       token,
     }),
+    
+    confirmarPagamento: (token, eventId, seatLabels, outcome) =>
+      request("/reservations", {
+        method: "POST",
+        body: { eventId, seatLabels, outcome },
+        token,
+      }),
+
+    meusIngressos: (token) => request("/reservations/mine", { token }),
+
 };
 

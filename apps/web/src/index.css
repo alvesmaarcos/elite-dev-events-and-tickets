@@ -155,3 +155,13 @@ button.link {
 }
 
 .hold-timer { font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* --- ingressos --- */
+.ticket-card { text-align: center; cursor: default; }
+.ticket-card:hover { border-color: var(--surface-2); transform: none; }
+
+.seat-badge {
+  margin-top: .6rem;
+  font-weight: 700;
+  color: var(--accent);
+}

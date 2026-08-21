@@ -4,7 +4,11 @@ import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { SeatMap } from "../components/SeatMap";
 
-const ETAPA = { ESCOLHENDO: "escolhendo", RESERVADO: "reservado" };
+const ETAPA = {
+  ESCOLHENDO: "escolhendo",
+  RESERVADO: "reservado",
+  CONCLUIDO: "concluido",
+};
 
 export function EventDetail() {
   const { id } = useParams();
@@ -19,6 +23,8 @@ export function EventDetail() {
   const [restanteMs, setRestanteMs] = useState(0);
   const [erro, setErro] = useState(null);
   const [ocupado, setOcupado] = useState(false);
+  const [ingressos, setIngressos] = useState([]);
+
   const intervaloRef = useRef(null);
 
   function carregarMapa() {
@@ -84,18 +90,30 @@ export function EventDetail() {
     }
   }
 
-  async function liberar() {
+  async function pagar(outcome) {
+    setErro(null);
     setOcupado(true);
     try {
-      await api.releaseSeats(token, id, selected);
-    } finally {
+      const dados = await api.confirmarPagamento(token, id, selected, outcome);
+
+      if (outcome === "decline") {
+        setEtapa(ETAPA.ESCOLHENDO);
+        setSelected([]);
+        setErro("Pagamento recusado. As poltronas foram liberadas.");
+      } else {
+        setIngressos(dados.tickets);
+        setEtapa(ETAPA.CONCLUIDO);
+      }
+    } catch (e) {
+      setErro(e.message);
       setEtapa(ETAPA.ESCOLHENDO);
       setSelected([]);
-      setErro(null);
+    } finally {
       setOcupado(false);
       carregarMapa();
     }
-  }
+}
+
 
   if (!event) return <div className="page">Carregando...</div>;
 
@@ -154,12 +172,37 @@ export function EventDetail() {
               Tempo para concluir:{" "}
               <span className="hold-timer">{minutos}:{segundos}</span>
             </p>
+
             <p className="muted small">
-              O pagamento entra na proxima sprint.
+              Pagamento simulado: escolha o desfecho para testar os dois caminhos.
             </p>
 
-            <button className="secondary" disabled={ocupado} onClick={liberar}>
-              Liberar poltronas
+            <div className="button-row">
+              <button disabled={ocupado} onClick={() => pagar("approve")}>
+                {ocupado ? "Processando..." : "Aprovar pagamento"}
+              </button>
+              <button
+                className="secondary"
+                disabled={ocupado}
+                onClick={() => pagar("decline")}
+              >
+                Recusar pagamento
+              </button>
+            </div>
+          </>
+        )}
+
+        {etapa === ETAPA.CONCLUIDO && (
+          <>
+            <p>
+              Pagamento aprovado! {ingressos.length} ingresso(s) emitido(s).
+              <br />
+              Poltronas:{" "}
+              <strong>{ingressos.map((i) => i.seatLabel).join(", ")}</strong>
+            </p>
+
+            <button onClick={() => navigate("/meus-ingressos")}>
+              Ver meus ingressos
             </button>
           </>
         )}
