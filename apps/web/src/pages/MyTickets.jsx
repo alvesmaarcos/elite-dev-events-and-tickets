@@ -1,7 +1,36 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
+
+/**
+ * Copia texto para a area de transferencia.
+ *
+ * navigator.clipboard so existe em HTTPS ou localhost. Pelo IP da rede local
+ * ele e undefined, entao mantemos o caminho antigo (textarea escondida +
+ * execCommand) como reserva -- feio, porem e o que funciona em todo lugar.
+ */
+async function copiarParaAreaDeTransferencia(texto) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(texto);
+      return true;
+    }
+
+    const campo = document.createElement("textarea");
+    campo.value = texto;
+    campo.style.position = "fixed";
+    campo.style.opacity = "0";
+    document.body.appendChild(campo);
+    campo.select();
+    const deuCerto = document.execCommand("copy");
+    document.body.removeChild(campo);
+    return deuCerto;
+  } catch {
+    return false;
+  }
+}
 
 const rotuloStatus = {
   VALID: "Valido",
@@ -27,6 +56,20 @@ export function MyTickets() {
   const { session, token } = useAuth();
   const [reservas, setReservas] = useState([]);
   const [erro, setErro] = useState(null);
+  // Guarda o id do ingresso recem-copiado, para dar retorno visual no botao.
+  const [copiado, setCopiado] = useState(null);
+
+  async function copiarLink(ingresso) {
+    const link = `${window.location.origin}/ingresso/${ingresso.code}`;
+    const deuCerto = await copiarParaAreaDeTransferencia(link);
+
+    if (deuCerto) {
+      setCopiado(ingresso.id);
+      setTimeout(() => setCopiado(null), 2000);
+    } else {
+      setErro("Nao foi possivel copiar. O link e: " + link);
+    }
+  }
 
   function carregar() {
     if (token) api.meusIngressos(token).then(setReservas);
@@ -83,15 +126,19 @@ export function MyTickets() {
                   {rotuloStatus[ingresso.status] || ingresso.status}
                 </p>
 
-                {/* window.location.origin monta o link com o endereco atual:
-                    funciona em localhost e no dominio publicado, sem mudar
-                    nada. O onFocus seleciona tudo para copiar com um Ctrl+C. */}
-                <input
-                  readOnly
-                  className="share-input"
-                  value={`${window.location.origin}/ingresso/${ingresso.code}`}
-                  onFocus={(e) => e.target.select()}
-                />
+                <div className="ticket-acoes">
+                  <Link className="botao" to={`/ingresso/${ingresso.code}`}>
+                    Ver ingresso
+                  </Link>
+
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => copiarLink(ingresso)}
+                  >
+                    {copiado === ingresso.id ? "Copiado!" : "Copiar link"}
+                  </button>
+                </div>
 
                 {podeCancelar(ingresso, reserva.event.date) && (
                   <button

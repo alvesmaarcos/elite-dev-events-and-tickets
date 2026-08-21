@@ -28,7 +28,16 @@ export function Gate() {
   const [resultado, setResultado] = useState(null);
   const [ocupado, setOcupado] = useState(false);
   const [camera, setCamera] = useState(false);
+  const [erroCamera, setErroCamera] = useState(null);
   const leitorRef = useRef(null);
+
+  // A camera do navegador so funciona em HTTPS ou em localhost. Acessando
+  // pelo IP da rede (http://192.168.x.x) ela nao abre, e o erro que o
+  // navegador da nao explica isso -- entao avisamos antes.
+  const contextoSeguro =
+    typeof window !== "undefined" &&
+    (window.isSecureContext ||
+      ["localhost", "127.0.0.1"].includes(window.location.hostname));
 
   async function validar(valor) {
     if (!valor.trim()) return;
@@ -56,7 +65,25 @@ export function Gate() {
 
       const leitor = new Html5QrcodeScanner(
         "leitor-qr",
-        { fps: 10, qrbox: 220 },
+        {
+          fps: 10,
+
+          // No celular, sem isto a biblioteca costuma abrir a camera
+          // FRONTAL -- apontada para o rosto de quem esta na portaria, e
+          // nao para o ingresso do cliente. "environment" pede a traseira.
+          videoConstraints: { facingMode: "environment" },
+
+          // Area de leitura proporcional a tela, em vez de 220px fixos: num
+          // celular estreito o quadrado fixo pode ficar maior que o video.
+          qrbox: (larguraVideo, alturaVideo) => {
+            const menorLado = Math.min(larguraVideo, alturaVideo);
+            const lado = Math.floor(menorLado * 0.75);
+            return { width: lado, height: lado };
+          },
+
+          rememberLastUsedCamera: true,
+          showTorchButtonIfSupported: true, // lanterna, util na entrada a noite
+        },
         false
       );
 
@@ -70,6 +97,11 @@ export function Gate() {
       );
 
       leitorRef.current = leitor;
+    }).catch((e) => {
+      // Sem isto, uma falha ao carregar a biblioteca deixa a tela em branco
+      // no lugar do leitor, sem nenhuma pista do motivo.
+      setErroCamera("Nao foi possivel abrir o leitor: " + e.message);
+      setCamera(false);
     });
 
     // A camera e um recurso fisico: sem esta limpeza, a luz da webcam
@@ -96,10 +128,25 @@ export function Gate() {
       </p>
 
       <div className="button-row">
-        <button onClick={() => setCamera((v) => !v)}>
+        <button
+          onClick={() => {
+            setErroCamera(null);
+            setCamera((v) => !v);
+          }}
+          disabled={!contextoSeguro}
+        >
           {camera ? "Fechar camera" : "Ler com camera"}
         </button>
       </div>
+
+      {!contextoSeguro && (
+        <p className="muted small">
+          A camera exige HTTPS. Acessando pelo IP da rede local ela nao abre —
+          use o endereco publicado (https://) ou digite o codigo abaixo.
+        </p>
+      )}
+
+      {erroCamera && <p className="error">{erroCamera}</p>}
 
       {camera && <div id="leitor-qr" className="leitor-qr" />}
 
