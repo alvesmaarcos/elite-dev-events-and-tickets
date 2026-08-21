@@ -1,19 +1,45 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3333";
 
+/**
+ * A requisicao nao chegou ao servidor: rede fora, API dormindo, CORS.
+ *
+ * Precisa ser distinguivel de um erro de negocio, senao a tela mostra a
+ * mensagem errada -- foi o que acontecia no login, que dizia "e-mail ou
+ * senha invalidos" quando o problema era o servidor nao responder.
+ */
+export class ErroDeRede extends Error {
+  constructor() {
+    super("Nao foi possivel falar com o servidor.");
+    this.name = "ErroDeRede";
+  }
+}
+
 async function request(path, { method = "GET", body, token } = {}) {
-  const res = await fetch(`${API_URL}${path}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res;
+
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    // fetch so rejeita quando a resposta nao chega. Qualquer status HTTP,
+    // inclusive 500, passa direto por aqui e cai na checagem abaixo.
+    throw new ErroDeRede();
+  }
 
   const data = await res.json().catch(() => null);
 
   if (!res.ok) {
-    throw new Error(data?.error || `Erro ${res.status}`);
+    const erro = new Error(data?.error || `Erro ${res.status}`);
+    // O status acompanha o erro para a tela poder reagir a ele: 401 no login
+    // e "senha errada", 401 em qualquer outro lugar e "sua sessao venceu".
+    erro.status = res.status;
+    throw erro;
   }
 
   return data;

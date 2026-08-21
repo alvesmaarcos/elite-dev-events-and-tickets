@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
+import { FalhaAoCarregar } from "../components/FalhaAoCarregar";
 import { api } from "../api/client";
 
 /**
@@ -58,6 +59,7 @@ export function MyTickets() {
   const [erro, setErro] = useState(null);
   // Guarda o id do ingresso recem-copiado, para dar retorno visual no botao.
   const [copiado, setCopiado] = useState(null);
+  const [falha, setFalha] = useState(null);
 
   async function copiarLink(ingresso) {
     const link = `${window.location.origin}/ingresso/${ingresso.code}`;
@@ -72,7 +74,11 @@ export function MyTickets() {
   }
 
   function carregar() {
-    if (token) api.meusIngressos(token).then(setReservas);
+    if (!token) return;
+    setFalha(null);
+    // Sem o catch, uma falha de rede deixava a tela dizendo "voce ainda nao
+    // tem ingressos" -- a pior mensagem possivel para quem acabou de comprar.
+    api.meusIngressos(token).then(setReservas).catch(setFalha);
   }
 
   useEffect(carregar, [token]);
@@ -102,7 +108,9 @@ export function MyTickets() {
 
       {erro && <p className="error">{erro}</p>}
 
-      {reservas.length === 0 && (
+      {falha && <FalhaAoCarregar erro={falha} aoTentarDeNovo={carregar} />}
+
+      {!falha && reservas.length === 0 && (
         <p className="muted">Voce ainda nao tem ingressos.</p>
       )}
 

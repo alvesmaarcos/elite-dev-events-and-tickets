@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
 import { Modal } from "../components/Modal";
+import { FalhaAoCarregar } from "../components/FalhaAoCarregar";
 import { RelatorioEvento } from "../components/RelatorioEvento";
 
 export function OrganizerDashboard() {
   const { session, token } = useAuth();
 
   const [meusEventos, setMeusEventos] = useState([]);
+  const [falhaNasSessoes, setFalhaNasSessoes] = useState(null);
   const [selecionado, setSelecionado] = useState(null);
 
   // --- catalogo de filmes (listagem paginada) ---
@@ -34,7 +36,9 @@ export function OrganizerDashboard() {
   const [erroEdicao, setErroEdicao] = useState(null);
 
   function carregarMeusEventos() {
-    if (token) api.myEvents(token).then(setMeusEventos);
+    if (!token) return;
+    setFalhaNasSessoes(null);
+    api.myEvents(token).then(setMeusEventos).catch(setFalhaNasSessoes);
   }
 
   useEffect(carregarMeusEventos, [token]);
@@ -361,6 +365,14 @@ export function OrganizerDashboard() {
 
       <section>
         <h2>Minhas sessoes publicadas</h2>
+
+        {falhaNasSessoes && (
+          <FalhaAoCarregar
+            erro={falhaNasSessoes}
+            aoTentarDeNovo={carregarMeusEventos}
+          />
+        )}
+
         <div className="grid">
           {meusEventos.map((ev) => (
             <div key={ev.id} className="card">
