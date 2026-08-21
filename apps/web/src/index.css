@@ -110,17 +110,9 @@ button.link {
 .catalog-card { width: 100%; font: inherit; }
 
 .price { color: var(--accent); font-weight: 600; }
-.seat-map { margin-top: 1.5rem; overflow-x: auto; }
+.seat-map { margin-top: 1.5rem; }
 
-.tela-indicador {
-  text-align: center;
-  font-size: .7rem;
-  letter-spacing: .3em;
-  color: var(--muted);
-  border-bottom: 2px solid var(--surface-2);
-  padding-bottom: .5rem;
-  margin-bottom: 1.2rem;
-}
+
 
 .seat-row { display: flex; align-items: center; gap: .4rem; margin-bottom: .4rem; }
 .seat-row-label { width: 1.3rem; flex-shrink: 0; color: var(--muted); font-size: .8rem; }
@@ -197,3 +189,192 @@ button.danger {
   color: var(--error);
 }
 button.danger:hover { background: rgba(209,106,90,.12); }
+
+/* =========================================================
+   Modal (card flutuante)
+   ========================================================= */
+.modal-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, .72);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+}
+
+.modal-card {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
+  animation: modal-entrada .16s ease-out;
+}
+
+@keyframes modal-entrada {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.modal-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.4rem;
+  border-bottom: 1px solid var(--surface-2);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  border-radius: 14px 14px 0 0;
+}
+.modal-topo h2 { margin: 0; font-size: 1.15rem; }
+
+.modal-fechar {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.6rem;
+  line-height: 1;
+  padding: 0 .3rem;
+  cursor: pointer;
+}
+.modal-fechar:hover { color: var(--ink); background: none; }
+
+.modal-corpo { padding: 1.4rem; }
+.modal-corpo .form { margin-top: 0; max-width: none; }
+
+/* =========================================================
+   Catalogo de filmes (painel do organizador)
+   ========================================================= */
+.filmes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1.1rem;
+  margin-top: 1.2rem;
+}
+
+.filme-card {
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.filme-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+
+.filme-poster {
+  width: 100%;
+  aspect-ratio: 2 / 3;   /* proporcao padrao de poster de cinema */
+  object-fit: cover;
+  display: block;
+  background: var(--surface-2);
+}
+.filme-poster-vazio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: .75rem;
+}
+
+.filme-info {
+  padding: .7rem;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  flex: 1;
+}
+.filme-info h4 {
+  margin: 0;
+  font-size: .85rem;
+  line-height: 1.3;
+  /* Titulo longo nao pode empurrar o card: corta em 2 linhas. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.filme-info button { margin-top: auto; width: 100%; font-size: .8rem; padding: .45rem; }
+
+.mostrar-mais { display: flex; justify-content: center; margin-top: 1.5rem; }
+
+/* =========================================================
+   Mapa de poltronas — sala completa, tela embaixo
+   ========================================================= */
+
+/* O mapa inteiro precisa caber sem corte. As poltronas encolhem conforme a
+   sala fica larga: clamp() dá um minimo legivel, um maximo confortavel, e no
+   meio o tamanho vem da largura disponivel dividida pelo numero de colunas
+   (--colunas, definido por quem usa o componente). */
+.seat-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.seat-row { display: flex; align-items: center; gap: 4px; margin-bottom: 0; }
+
+.seat {
+  /* O tamanho vem medido em JS (ver SeatMap.jsx), para a sala inteira caber
+     sem corte por mais larga que ela seja. */
+  width: var(--tamanho-poltrona, 26px);
+  height: var(--tamanho-poltrona, 26px);
+  font-size: calc(var(--tamanho-poltrona, 26px) * .4);
+  /* Cantos arredondados so em cima: lembra o encosto de uma poltrona. */
+  border-radius: 7px 7px 3px 3px;
+}
+
+.seat-row-label {
+  width: 18px;
+  font-size: .7rem;
+  text-align: center;
+}
+
+/* --- a tela, embaixo e em destaque --- */
+.tela {
+  margin: 1.6rem auto .4rem;
+  width: 78%;
+  text-align: center;
+}
+
+.tela-barra {
+  height: 8px;
+  border-radius: 0 0 60% 60% / 0 0 100% 100%;
+  background: linear-gradient(to bottom, var(--accent), rgba(232, 161, 58, .15));
+  box-shadow: 0 10px 34px 2px rgba(232, 161, 58, .45);
+}
+
+.tela-texto {
+  display: inline-block;
+  margin-top: .55rem;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .42em;
+  text-indent: .42em;   /* compensa o espaco que o letter-spacing poe no fim */
+  color: var(--accent);
+}
+
+.seat-legend { justify-content: center; margin-top: 1.4rem; }
+
+/* --- cabecalho da compra, dentro do modal --- */
+.compra-cabecalho { margin-bottom: .4rem; }
+.compra-cabecalho p { margin: .2rem 0; }
+
+/* O resumo/checkout ganha peso: e onde a decisao acontece. */
+.checkout-box {
+  margin-top: 1.5rem;
+  padding: 1.1rem 1.2rem;
+  background: var(--surface-2);
+  border: 1px solid #3a3128;
+  border-radius: var(--radius);
+}
+
+.evento-card { width: 100%; font: inherit; }

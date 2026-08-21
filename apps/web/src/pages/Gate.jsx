@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
+import { Modal } from "../components/Modal";
 
 const estilo = {
   VALIDO: "gate-ok",
@@ -118,18 +119,33 @@ export function Gate() {
         </button>
       </form>
 
+      {/* O resultado aparece como card flutuante: quem trabalha na portaria
+          olha de relance, com fila esperando. Um bloco grande no centro da
+          tela e impossivel de nao ver, e fechar ja prepara a proxima leitura. */}
       {resultado && (
-        <div className={`gate-result ${estilo[resultado.result] || "gate-erro"}`}>
-          <strong>{rotulo[resultado.result] || resultado.result}</strong>
-          {resultado.event && <p>Sessao: {resultado.event}</p>}
-          {resultado.seatLabel && <p>Poltrona: {resultado.seatLabel}</p>}
-          {resultado.usedAt && (
-            <p className="small">
-              Utilizado em {new Date(resultado.usedAt).toLocaleString("pt-BR")}
-            </p>
-          )}
-          {resultado.reason && <p className="muted small">{resultado.reason}</p>}
-        </div>
+        <Modal
+          titulo="Resultado da validacao"
+          onClose={() => setResultado(null)}
+          largura={430}
+        >
+          <div className={`gate-result ${estilo[resultado.result] || "gate-erro"}`}>
+            <strong>{rotulo[resultado.result] || resultado.result}</strong>
+            {resultado.event && <p>Sessao: {resultado.event}</p>}
+            {resultado.seatLabel && <p>Poltrona: {resultado.seatLabel}</p>}
+            {resultado.usedAt && (
+              <p className="small">
+                Utilizado em {new Date(resultado.usedAt).toLocaleString("pt-BR")}
+              </p>
+            )}
+            {resultado.reason && <p className="muted small">{resultado.reason}</p>}
+          </div>
+
+          <div className="button-row">
+            <button type="button" onClick={() => setResultado(null)}>
+              Validar proximo
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   );

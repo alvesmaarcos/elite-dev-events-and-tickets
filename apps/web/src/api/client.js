@@ -35,8 +35,13 @@ export const api = {
   createEvent: (token, payload) =>
     request("/events", { method: "POST", body: payload, token }),
 
-  searchCatalog: (token, q) =>
-    request(`/catalog/tmdb?q=${encodeURIComponent(q)}`, { token }),
+  // Sem "q" a API devolve os filmes EM CARTAZ; com "q", o resultado da
+  // busca. Nos dois casos vem paginado: { items, page, totalPages }.
+  catalogo: (token, q, page = 1) =>
+    request(
+      `/catalog/tmdb?page=${page}${q ? `&q=${encodeURIComponent(q)}` : ""}`,
+      { token }
+    ),
 
   getSeats: (eventId, token) =>
   request(`/events/${eventId}/seats`, token ? { token } : {}),
