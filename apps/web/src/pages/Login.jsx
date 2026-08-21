@@ -9,6 +9,7 @@ import { ErroDeRede } from "../api/client";
 function destinoDoPapel(role) {
   if (role === "ORGANIZER") return "/organizador";
   if (role === "GATE") return "/portaria";
+  if (role === "STORE") return "/loja";
   return "/filmes";
 }
 
@@ -83,6 +84,7 @@ export function Login() {
           <li>organizador@gmail.com</li>
           <li>cliente1@gmail.com</li>
           <li>portaria@gmail.com</li>
+          <li>loja@gmail.com</li>
         </ul>
       </div>
     </div>

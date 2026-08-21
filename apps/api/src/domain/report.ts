@@ -20,13 +20,18 @@ export interface Relatorio {
   ocupacao: number;
   capacidade: number;
   receita: number;
+  receitaProdutos: number;
+  receitaTotal: number;
   taxaComparecimento: number;
 }
 
 export function montarRelatorio(
   tickets: TicketDoRelatorio[],
   precoDoIngresso: number,
-  capacidade: number
+  capacidade: number,
+  // A receita da lojinha chega pronta (ver domain/store.ts): as duas contas
+  // tem regras de reembolso diferentes e nada ganham em virar uma so.
+  receitaProdutos = 0
 ): Relatorio {
   const validados = tickets.filter((t) => t.status === "USED").length;
   const cancelados = tickets.filter((t) => t.status === "CANCELED").length;
@@ -42,6 +47,8 @@ export function montarRelatorio(
   // entao nao entram na receita.
   const vendidosEfetivamente = validados + naoCompareceram;
 
+  const receitaDeIngressos = vendidosEfetivamente * precoDoIngresso;
+
   return {
     ingressosEmitidos: tickets.length,
     clientes,
@@ -50,7 +57,9 @@ export function montarRelatorio(
     naoCompareceram,
     ocupacao: vendidosEfetivamente,
     capacidade,
-    receita: vendidosEfetivamente * precoDoIngresso,
+    receita: receitaDeIngressos,
+    receitaProdutos,
+    receitaTotal: receitaDeIngressos + receitaProdutos,
     // Dos que efetivamente valiam na hora da sessao, quantos apareceram.
     // Sem ingresso valido, a taxa e 0 em vez de divisao por zero.
     taxaComparecimento:

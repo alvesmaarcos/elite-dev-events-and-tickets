@@ -4,9 +4,10 @@ Plataforma de venda de ingressos para sessões de cinema, construída para o
 **Desafio Elite Dev (Verzel)** em um prazo de 7 dias.
 
 O organizador monta sessões a partir de filmes reais do catálogo da TMDb e
-configura a própria sala; o cliente escolhe a poltrona num mapa, paga
-(simulado) e recebe um ingresso com QR Code; a portaria valida o ingresso
-pela câmera do celular, e cada ingresso só entra uma vez.
+configura a própria sala; o cliente escolhe a poltrona num mapa, monta o
+combo da bomboniere, paga (simulado) e recebe um ingresso com QR Code; a
+portaria valida a entrada pela câmera do celular, e cada ingresso só entra
+uma vez. O mesmo QR serve de comanda no balcão da loja.
 
 | Ambiente | Endereço |
 | --- | --- |
@@ -116,7 +117,8 @@ Criadas pelo seed. Senha de todas: `12345678`.
 | Organizador | `organizador@gmail.com` | publica sessões, edita, cancela, encerra e vê o relatório |
 | Cliente | `cliente1@gmail.com` | compra ingresso, vê e cancela os próprios ingressos |
 | Cliente | `cliente2@gmail.com` | serve para testar a disputa por poltrona |
-| Portaria | `portaria@gmail.com` | valida ingressos na entrada |
+| Portaria | `portaria@gmail.com` | valida ingressos na entrada e avisa do combo a retirar |
+| Loja | `loja@gmail.com` | lê o mesmo QR e entrega os itens da bomboniere |
 
 Não existe cadastro aberto: os papéis são operacionais — quem trabalha no
 cinema não se cadastra sozinho — e criar as contas pelo seed deixa a
@@ -131,14 +133,21 @@ O caminho mais curto para ver o sistema inteiro funcionando:
 1. **Organizador** → *Painel* → escolha um filme em cartaz → *Adicionar
    sessão* → defina data, local, tamanho da sala e preço → *Publicar sessão*.
 2. **Cliente 1** → *Em cartaz* → clique na sessão → marque poltronas →
-   *Reservar* (o cronômetro de 2 minutos começa) → *Aprovar pagamento*.
+   *Reservar* (o cronômetro de 2 minutos começa) → em *Complete seu combo*,
+   acrescente uma pipoca (escolhendo o tipo) e um refrigerante → *Aprovar
+   pagamento*.
 3. **Cliente 2**, em outro navegador → tente as **mesmas poltronas** enquanto
    a reserva do cliente 1 está de pé: elas aparecem indisponíveis.
 4. **Cliente 1** → *Meus ingressos* → *Ver ingresso*, e o QR Code aparece.
-5. **Portaria** → *Portaria* → leia o QR pela câmera: **válido**. Leia o
-   mesmo QR de novo: **já utilizado**.
-6. **Organizador** → *Encerrar* a sessão → relatório com ingressos emitidos,
-   clientes, validados, cancelados, quem não compareceu, ocupação e receita.
+5. **Portaria** → escolha o filme daquela entrada → leia o QR pela câmera:
+   **válido**, com o aviso do combo a retirar na loja. Leia o mesmo QR de
+   novo: **já utilizado**. Leia um ingresso de outra sessão: o sistema diz de
+   qual filme ele é.
+6. **Loja** → leia o **mesmo QR** → o pedido aparece com os itens e as opções
+   → *Entregar pedido*.
+7. **Organizador** → *Encerrar* a sessão → relatório com ingressos emitidos,
+   clientes, validados, cancelados, quem não compareceu, ocupação e as três
+   receitas: ingressos, loja e total.
 
 ---
 
@@ -265,7 +274,8 @@ utilizá-lo. Fácil de orquestrar utilizando Docker.
 - **Mapeamento:** Prisma ORM, devido à praticidade.
 - **Migrations versionadas:** cada funcionalidade trouxe a sua própria
   migration (`init_user`, `add_event`, `add_seat_and_room`, `add_seat_hold`,
-  `add_reservation_and_ticket`, `add_cancellation`, `add_event_closing`), em
+  `add_reservation_and_ticket`, `add_cancellation`, `add_event_closing`,
+  `add_store`), em
   vez de um `db push` que sobrescreve o schema sem deixar rastro. O histórico
   de migrations conta a mesma história que o histórico de commits.
 
@@ -391,7 +401,36 @@ entrada só.
 organizador, no painel, com o estado marcado. Não faz sentido oferecer compra
 de uma sessão que não vai acontecer.
 
-**14. Cada papel entra pelo seu próprio começo.** Depois do login, o
+**14. O combo pertence à compra, não ao ingresso.** Quem leva quatro pessoas
+e uma pipoca grande fez **um** pedido, não quatro. Por isso os itens ficam na
+reserva, e qualquer ingresso daquela compra abre o pedido no balcão — é o que
+permite o QR ser um só.
+
+**15. A pipoca doce não leva manteiga — e isso não é um `if`.** As opções
+existentes são *salgada com manteiga*, *salgada sem manteiga* e *doce*. A
+combinação proibida simplesmente não existe na lista, então não há regra para
+alguém esquecer de chamar; há um teste que trava isso, e ele quebra se alguém
+inventar `DOCE_COM_MANTEIGA`.
+
+**16. O preço do item é congelado na compra.** O `OrderItem` guarda o valor
+que valia naquele momento. Mesma razão do relatório da sessão: mexer na
+tabela de preços depois não pode reescrever o que já foi vendido.
+
+**17. Cancelou tudo, o combo volta junto.** Se a pessoa cancelou todos os
+ingressos da compra, ela não vai ao cinema e o combo é reembolsado — não
+entra na receita nem pode ser retirado. Se cancelou só parte, alguém daquela
+compra ainda vai, e a pipoca continua vendida.
+
+**18. A entrega é uma escrita condicional.** O balcão marca só os itens que
+ainda estão pendentes; se dois terminais lerem o mesmo QR ao mesmo tempo,
+apenas um registra a entrega. Mesmo padrão da poltrona e da catraca.
+
+**19. A portaria avisa, mas não entrega.** Quem valida a entrada vê o que há
+para retirar na loja. É o único momento em que a pessoa é abordada antes de
+entrar na sala — e é o momento em que ela ainda pode lembrar da pipoca que já
+pagou.
+
+**20. Cada papel entra pelo seu próprio começo.** Depois do login, o
 organizador cai no painel, a portaria no leitor e o cliente na vitrine. A
 portaria, aliás, nem vê a seção de filmes em cartaz: ela não compra ingresso.
 
@@ -413,6 +452,8 @@ integridade do negócio, e não a aplicação inteira.
 - **Decisão da portaria** — todos os ramos, incluindo a ordem de precedência
   das mensagens.
 - **Prazo de cancelamento** — o limite de 2 horas, com o "agora" injetado.
+- **Loja** — opções válidas por categoria (incluindo a inexistência da pipoca
+  doce com manteiga), soma do pedido e a regra de reembolso do combo.
 
 Testar UI ou casos triviais renderia muito menos dentro do mesmo prazo.
 
@@ -495,6 +536,34 @@ quem usa, e o custo cairia todo em risco de migration.
 **Ajustes finais de interface.** A vitrine do cliente ganhou os mesmos cards
 de pôster do painel do organizador, com substituto para o filme que não tem
 imagem, e a portaria deixou de ver a seção de filmes em cartaz.
+
+**Portaria por sessão.** O requisito previa o caso do ingresso da sessão
+errada, e a decisão já existia no domínio — mas a tela nunca mandava o id da
+sessão, então aquele caminho era código morto: qualquer ingresso válido
+entrava em qualquer porta. Agora a portaria começa escolhendo o filme daquela
+entrada, e a recusa diz de qual sessão o ingresso realmente é, com local,
+data e poltrona. A porta também mostra quantos ingressos já validou.
+
+**Lojinha do cinema.** A última funcionalidade, e a única inteiramente nova
+depois do escopo obrigatório: uma bomboniere embutida na compra.
+
+- **Onde ela aparece:** entre a reserva das poltronas e o pagamento. É o
+  momento em que a pessoa já decidiu ir ao cinema e ainda não pagou — e é um
+  bloco na mesma tela, não um passo a mais, para não gastar o cronômetro de
+  dois minutos da reserva.
+- **O cardápio:** pipoca (média e grande, com escolha entre salgada com
+  manteiga, salgada sem manteiga e doce), refrigerantes, águas e chocolates.
+  Vem do seed, porque bomboniere é infraestrutura da casa, não conteúdo que o
+  organizador cria.
+- **Um QR só:** o cliente não ganha um segundo comprovante para guardar. A
+  portaria pergunta "pode entrar?" e a loja pergunta "o que esta pessoa
+  comprou?" — mesma chave, perguntas diferentes. Ao liberar a entrada, a
+  portaria ainda avisa o que há para retirar.
+- **Novo perfil `loja`:** lê o QR pela mesma câmera da portaria (o leitor
+  virou componente compartilhado), mostra o pedido com as opções escolhidas e
+  registra a entrega.
+- **Receita:** o relatório do organizador passou a separar receita de
+  ingressos, receita da loja e total.
 
 ---
 

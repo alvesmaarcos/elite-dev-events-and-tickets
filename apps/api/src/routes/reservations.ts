@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole } from "../middleware/auth";
 import { buildQrPayload, generateTicketCode, signCode } from "../lib/qr";
+import { validarEscolha, CategoriaProduto } from "../domain/store";
+import { descreverOpcao } from "./store";
 
 export const reservationsRouter = Router();
 
@@ -10,6 +12,16 @@ const checkoutSchema = z.object({
   eventId: z.string().min(1),
   seatLabels: z.array(z.string().min(1)).min(1),
   outcome: z.enum(["approve", "decline"]),
+  // O combo da lojinha, escolhido antes de pagar. Ausente = so o ingresso.
+  items: z
+    .array(
+      z.object({
+        productId: z.string().min(1),
+        option: z.string().nullish(),
+        quantity: z.number().int(),
+      })
+    )
+    .optional(),
 });
 
 class ReservaExpirada extends Error {}
@@ -22,6 +34,7 @@ reservationsRouter.post("/", requireAuth, requireRole("CLIENT"), async (req, res
   }
 
   const { eventId, seatLabels, outcome } = parsed.data;
+  const itensPedidos = parsed.data.items ?? [];
   const userId = req.user!.id;
 
   // Sessao encerrada nao aceita mais pagamento -- e o que mantem o relatorio
@@ -40,6 +53,35 @@ reservationsRouter.post("/", requireAuth, requireRole("CLIENT"), async (req, res
     }
     if (event.canceledAt) {
       res.status(409).json({ error: "Esta sessao foi cancelada." });
+      return;
+    }
+  }
+
+  // O combo e conferido ANTES de tocar nas poltronas: um erro de digitacao
+  // no pedido nao pode deixar o cliente com assentos vendidos e sem pipoca --
+  // nem com uma transacao pela metade.
+  const produtos = itensPedidos.length
+    ? await prisma.product.findMany({
+        where: { id: { in: itensPedidos.map((i) => i.productId) }, active: true },
+      })
+    : [];
+
+  for (const item of itensPedidos) {
+    const produto = produtos.find((p) => p.id === item.productId);
+
+    if (!produto) {
+      res.status(400).json({ error: "Produto indisponivel no cardapio." });
+      return;
+    }
+
+    const problema = validarEscolha(
+      produto.category as CategoriaProduto,
+      item.option,
+      item.quantity
+    );
+
+    if (problema) {
+      res.status(400).json({ error: `${produto.name}: ${problema}` });
       return;
     }
   }
@@ -97,6 +139,19 @@ reservationsRouter.post("/", requireAuth, requireRole("CLIENT"), async (req, res
         });
       }
 
+      if (itensPedidos.length) {
+        await tx.orderItem.createMany({
+          data: itensPedidos.map((item) => ({
+            reservationId: reservation.id,
+            productId: item.productId,
+            option: item.option ?? null,
+            quantity: item.quantity,
+            // Preco copiado do CARDAPIO, nunca do que o navegador mandou.
+            unitPrice: produtos.find((p) => p.id === item.productId)!.price,
+          })),
+        });
+      }
+
       return tx.ticket.findMany({
         where: { reservationId: reservation.id },
         include: { seat: true },
@@ -129,6 +184,7 @@ reservationsRouter.get("/mine", requireAuth, requireRole("CLIENT"), async (req, 
     include: {
       event: true,
       tickets: { include: { seat: true } },
+      items: { include: { product: true }, orderBy: { createdAt: "asc" } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -149,6 +205,15 @@ reservationsRouter.get("/mine", requireAuth, requireRole("CLIENT"), async (req, 
         status: ingresso.status,
         seatLabel: ingresso.seat.label,
         qrPayload: buildQrPayload(ingresso.code, ingresso.signature),
+      })),
+      // O cliente precisa saber o que tem para retirar -- e com qual QR.
+      itens: reserva.items.map((item) => ({
+        id: item.id,
+        nome: item.product.name,
+        opcao: descreverOpcao(item.option),
+        quantidade: item.quantity,
+        total: item.quantity * item.unitPrice,
+        entregueEm: item.deliveredAt,
       })),
     }))
   );

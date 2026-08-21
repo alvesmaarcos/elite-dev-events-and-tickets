@@ -7,6 +7,7 @@ import { eventsRouter } from "./routes/events";
 import { reservationsRouter } from "./routes/reservations";
 import { gateRouter } from "./routes/gate";
 import { ticketsRouter } from "./routes/tickets";
+import { storeRouter } from "./routes/store";
 
 
 const app = express();
@@ -24,6 +25,7 @@ app.use("/events", eventsRouter);
 app.use("/reservations", reservationsRouter);
 app.use("/gate", gateRouter);
 app.use("/tickets", ticketsRouter);
+app.use("/store", storeRouter);
 
 // Rota inexistente tambem responde JSON. O padrao do Express e uma pagina
 // HTML, que quebra o cliente do front (ele espera JSON em toda resposta).

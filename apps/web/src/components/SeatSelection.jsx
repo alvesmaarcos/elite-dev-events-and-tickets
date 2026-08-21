@@ -6,6 +6,7 @@ import { SeatMap } from "./SeatMap";
 import { Poster } from "./Poster";
 import { FalhaAoCarregar } from "./FalhaAoCarregar";
 import { AvisoDeEspera } from "./AvisoDeEspera";
+import { Combo } from "./Combo";
 
 const ETAPA = {
   ESCOLHENDO: "escolhendo",
@@ -34,6 +35,8 @@ export function SeatSelection({ eventId, onConcluido }) {
   const [ocupado, setOcupado] = useState(false);
   const [ingressos, setIngressos] = useState([]);
   const [falhaAoAbrir, setFalhaAoAbrir] = useState(null);
+  const [cardapio, setCardapio] = useState(null);
+  const [combo, setCombo] = useState([]);
 
   const intervaloRef = useRef(null);
 
@@ -51,6 +54,10 @@ export function SeatSelection({ eventId, onConcluido }) {
       api.getEvent(eventId).then(setEvent),
       api.getSeats(eventId, token).then(setSeats),
     ]).catch(setFalhaAoAbrir);
+
+    // O cardapio da lojinha nao e essencial para comprar o ingresso: se ele
+    // falhar, a compra continua funcionando sem os adicionais.
+    if (token) api.cardapio(token).then(setCardapio).catch(() => setCardapio(null));
   }
 
   useEffect(carregarTudo, [eventId, token]);
@@ -113,11 +120,23 @@ export function SeatSelection({ eventId, onConcluido }) {
     setErro(null);
     setOcupado(true);
     try {
-      const dados = await api.confirmarPagamento(token, eventId, selected, outcome);
+      const dados = await api.confirmarPagamento(
+        token,
+        eventId,
+        selected,
+        outcome,
+        // O servidor reconfere preco e opcoes; daqui vai so a escolha.
+        combo.map(({ productId, option, quantity }) => ({
+          productId,
+          option,
+          quantity,
+        }))
+      );
 
       if (outcome === "decline") {
         setEtapa(ETAPA.ESCOLHENDO);
         setSelected([]);
+        setCombo([]);
         setErro("Pagamento recusado. As poltronas foram liberadas.");
       } else {
         setIngressos(dados.tickets);
@@ -146,7 +165,12 @@ export function SeatSelection({ eventId, onConcluido }) {
     );
   }
 
-  const total = event.price * selected.length;
+  const totalIngressos = event.price * selected.length;
+  const totalCombo = combo.reduce(
+    (soma, linha) => soma + linha.quantity * linha.produto.price,
+    0
+  );
+  const total = totalIngressos + totalCombo;
   const minutos = String(Math.floor(restanteMs / 60000)).padStart(2, "0");
   const segundos = String(Math.floor((restanteMs % 60000) / 1000)).padStart(2, "0");
 
@@ -211,14 +235,62 @@ export function SeatSelection({ eventId, onConcluido }) {
           <>
             <p>
               Poltronas reservadas: <strong>{selected.join(", ")}</strong>
-              <br />
-              Total: <span className="price">R$ {total.toFixed(2)}</span>
             </p>
             <p>
               Tempo para concluir:{" "}
               <span className="hold-timer">
                 {minutos}:{segundos}
               </span>
+            </p>
+
+            {/* A lojinha fica entre a reserva e o pagamento, de proposito: e
+                o momento em que a pessoa ja decidiu ir ao cinema e ainda nao
+                pagou. Sem passo extra de navegacao, para nao gastar o
+                cronometro da reserva. */}
+            {cardapio && (
+              <details className="combo-caixa" open>
+                <summary>
+                  Complete seu combo
+                  {totalCombo > 0 && (
+                    <span className="price"> +R$ {totalCombo.toFixed(2)}</span>
+                  )}
+                </summary>
+
+                <Combo cardapio={cardapio} linhas={combo} onChange={setCombo} />
+              </details>
+            )}
+
+            {combo.length > 0 && (
+              <ul className="combo-resumo">
+                {combo.map((linha) => (
+                  <li key={`${linha.productId}-${linha.option ?? ""}`}>
+                    {linha.quantity}x {linha.produto.name}
+                    {linha.option && (
+                      <em className="muted small">
+                        {" "}
+                        —{" "}
+                        {
+                          cardapio.opcoesPipoca.find(
+                            (o) => o.valor === linha.option
+                          )?.rotulo
+                        }
+                      </em>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <p className="total-final">
+              Total:{" "}
+              <span className="price">R$ {total.toFixed(2)}</span>
+              {totalCombo > 0 && (
+                <span className="muted small">
+                  {" "}
+                  ({selected.length} ingresso(s) R$ {totalIngressos.toFixed(2)} +
+                  loja R$ {totalCombo.toFixed(2)})
+                </span>
+              )}
             </p>
 
             <p className="muted small">

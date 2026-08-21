@@ -7,6 +7,7 @@ import { optionalAuth } from "../middleware/auth";
 import { liberarReservasVencidas } from "./seats";
 import { buildSeatGrid } from "../domain/seats";
 import { montarRelatorio } from "../domain/report";
+import { receitaDeProdutos } from "../domain/store";
 
 export const eventsRouter = Router();
 
@@ -407,10 +408,24 @@ eventsRouter.get("/:id/report", requireAuth, requireRole("ORGANIZER"), async (re
     include: { reservation: true },
   });
 
+  // A receita da loja vem por RESERVA, e nao por ingresso: o combo pertence a
+  // compra, e a regra de reembolso olha para a compra inteira.
+  const reservas = await prisma.reservation.findMany({
+    where: { eventId: event.id },
+    include: { tickets: true, items: true },
+  });
+
   const relatorio = montarRelatorio(
     tickets.map((t) => ({ status: t.status, clientId: t.reservation.clientId })),
     event.price,
-    event.roomRows * event.roomSeatsPerRow
+    event.roomRows * event.roomSeatsPerRow,
+    receitaDeProdutos(
+      reservas.map((reserva) => ({
+        ticketsAtivos: reserva.tickets.filter((t) => t.status !== "CANCELED")
+          .length,
+        itens: reserva.items,
+      }))
+    )
   );
 
   res.json({

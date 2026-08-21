@@ -49,6 +49,10 @@ function acoesDoHero(session) {
     return [{ para: "/portaria", texto: "Abrir a portaria" }];
   }
 
+  if (session.role === "STORE") {
+    return [{ para: "/loja", texto: "Abrir a loja" }];
+  }
+
   if (session.role === "ORGANIZER") {
     return [VER_FILMES, { para: "/organizador", texto: "Painel do organizador" }];
   }
@@ -152,8 +156,9 @@ export function Landing() {
         </div>
       </section>
 
-      {/* A portaria nao ve a vitrine: nada aqui serve ao trabalho dela. */}
-      {session?.role !== "GATE" && emCartaz.length > 0 && (
+      {/* Portaria e loja nao veem a vitrine: nada aqui serve ao trabalho
+          delas. */}
+      {!["GATE", "STORE"].includes(session?.role) && emCartaz.length > 0 && (
         <section className="previa">
           <div className="previa-topo">
             <h2>Em cartaz agora</h2>

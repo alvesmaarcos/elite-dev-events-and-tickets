@@ -16,6 +16,8 @@ export function RelatorioEvento({ dados }) {
     ocupacao,
     capacidade,
     receita,
+    receitaProdutos,
+    receitaTotal,
     taxaComparecimento,
   } = dados;
 
@@ -80,14 +82,23 @@ export function RelatorioEvento({ dados }) {
             <td>R$ {evento.price.toFixed(2)}</td>
           </tr>
           <tr>
-            <td>Receita</td>
+            <td>Receita de ingressos</td>
             <td>R$ {receita.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td>Receita da loja</td>
+            <td>R$ {receitaProdutos.toFixed(2)}</td>
+          </tr>
+          <tr className="linha-total">
+            <td>Receita total</td>
+            <td>R$ {receitaTotal.toFixed(2)}</td>
           </tr>
         </tbody>
       </table>
 
       <p className="muted small">
-        Ingressos cancelados foram reembolsados, entao nao entram na receita.
+        Ingressos cancelados foram reembolsados, entao nao entram na receita —
+        e o combo de quem cancelou a compra inteira volta junto.
         "Nao compareceram" sao os que continuaram validos ate o fim e nunca
         passaram pela portaria.
       </p>

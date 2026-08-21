@@ -18,6 +18,7 @@ enum Role {
   ORGANIZER
   CLIENT
   GATE
+  STORE
 }
 model User {
   id        String @id @default(cuid())
@@ -89,6 +90,10 @@ model Reservation {
   client    User     @relation(fields: [clientId], references: [id])
   createdAt DateTime @default(now())
   tickets   Ticket[]
+  // Os adicionais comprados junto com os ingressos. Ficam na reserva, e nao
+  // no ingresso: o combo e da COMPRA -- quem leva quatro pessoas e uma pipoca
+  // grande fez um pedido so.
+  items     OrderItem[]
 }
 
 model Ticket {
@@ -103,4 +108,40 @@ model Ticket {
   usedAt        DateTime?
   canceledAt    DateTime?
   createdAt     DateTime     @default(now())
+}
+
+enum ProductCategory {
+  REFRIGERANTE
+  CHOCOLATE
+  AGUA
+  PIPOCA
+}
+
+model Product {
+  id       String          @id @default(cuid())
+  name     String
+  category ProductCategory
+  price    Float
+  // Tirar de linha em vez de apagar: um produto descontinuado ainda precisa
+  // existir para os pedidos antigos continuarem legiveis.
+  active   Boolean         @default(true)
+  items    OrderItem[]
+}
+
+model OrderItem {
+  id            String      @id @default(cuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  productId     String
+  product       Product     @relation(fields: [productId], references: [id])
+  // Escolha feita na compra -- so a pipoca tem. Ver domain/store.ts: as
+  // combinacoes invalidas (doce com manteiga) nem existem na lista.
+  option        String?
+  quantity      Int
+  // Preco no momento da compra. Mesma razao do relatorio da sessao: mexer na
+  // tabela de precos depois nao pode reescrever o que ja foi vendido.
+  unitPrice     Float
+  // Retirado no balcao da loja. Data, e nao boolean: serve de comprovante.
+  deliveredAt   DateTime?
+  createdAt     DateTime    @default(now())
 }
