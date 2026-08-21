@@ -10,40 +10,6 @@
  * servidor. Ver gate.test.ts.
  */
 
-/**
- * Normaliza o que chegou no campo da portaria.
- *
- * Na pratica a portaria recebe o codigo de tres formas, e todas sao
- * legitimas:
- *   1. "codigo.assinatura"                  -> QR lido pela camera
- *   2. "codigo"                             -> digitacao manual
- *   3. "http://.../ingresso/codigo"         -> link de compartilhamento colado
- *
- * A terceira existe porque a tela "Meus ingressos" entrega um LINK para o
- * cliente compartilhar. E natural que alguem cole esse link inteiro aqui --
- * entao o servidor aceita, em vez de responder "codigo nao encontrado" e
- * deixar a pessoa sem entender o que fez de errado.
- *
- * Aceitar o link nao afrouxa a seguranca: equivale a digitar o codigo, que
- * ja era aceito. Quem tem o link tem o ingresso, como um bilhete de aviao.
- */
-export function normalizeGateInput(entrada: string): string {
-  const limpo = entrada.trim();
-  if (!limpo) return "";
-
-  // Descarta ?query e #fragmento, que podem vir junto num link copiado.
-  const semExtras = limpo.split("?")[0].split("#")[0];
-
-  // Um codigo (UUID) e uma assinatura (hex) nunca contem barra. Se tem
-  // barra, e um link: interessa so o ultimo pedaco do caminho.
-  if (semExtras.includes("/")) {
-    const partes = semExtras.split("/").filter(Boolean);
-    return partes[partes.length - 1] ?? "";
-  }
-
-  return semExtras;
-}
-
 export type GateResultCode = "VALIDO" | "JA_UTILIZADO" | "EVENTO_ERRADO";
 
 export interface GateTicketInput {
