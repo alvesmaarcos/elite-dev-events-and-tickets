@@ -452,3 +452,18 @@ button.danger:hover { background: rgba(209,106,90,.12); }
 .relatorio-tabela { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .88rem; }
 .relatorio-tabela td { padding: .5rem 0; border-bottom: 1px solid var(--surface-2); }
 .relatorio-tabela td:last-child { text-align: right; font-weight: 600; }
+
+/* Corpo clicavel do card de sessao. Precisa parecer o card inteiro, mas ser
+   um botao proprio, para conviver com as acoes do organizador ao lado. */
+.evento-corpo {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.evento-corpo:hover { background: none; filter: none; }

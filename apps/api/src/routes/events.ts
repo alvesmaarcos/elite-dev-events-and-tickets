@@ -33,9 +33,11 @@ eventsRouter.get("/", async (req, res) => {
 
   const events = await prisma.event.findMany({
     where: {
-      // Evento cancelado some da vitrine publica -- mas continua visivel
-      // para o organizador, em /mine/list.
+      // Cancelado ou encerrado some da vitrine publica -- mas continua
+      // visivel para o organizador, em /mine/list. Nao faz sentido oferecer
+      // compra de uma sessao que nao vai acontecer ou que ja acabou.
       canceledAt: null,
+      closedAt: null,
       ...(q
         ? {
             OR: [
