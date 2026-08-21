@@ -406,3 +406,15 @@ button.danger:hover { background: rgba(209,106,90,.12); }
 .botao:hover { filter: brightness(1.08); color: #14110f; }
 
 .ticket-acoes button { font-size: .8rem; padding: .45rem .7rem; }
+
+/* O QR precisa de fundo branco ao redor para a camera achar os tres
+   localizadores (os quadrados dos cantos). Sobre o card escuro do tema, sem
+   essa area clara o leitor nao consegue delimitar o codigo -- e falha mesmo
+   com o QR perfeitamente nitido. */
+.qr-area {
+  background: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  display: inline-block;
+  line-height: 0;
+}

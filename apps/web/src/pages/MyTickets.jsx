@@ -119,7 +119,21 @@ export function MyTickets() {
               <div key={ingresso.id} className="card ticket-card">
                 {/* A seguranca toda foi feita no servidor: o front so desenha
                     o texto "codigo.assinatura" que a API ja montou. */}
-                <QRCodeSVG value={ingresso.qrPayload} size={140} />
+                {/* marginSize: a "zona de silencio", a borda branca ao redor
+                    do codigo. O padrao da biblioteca e ZERO, e sem ela a
+                    maioria dos leitores nao consegue localizar o QR -- por
+                    mais nitida que a imagem esteja. A especificacao pede 4
+                    modulos.
+
+                    O tamanho tambem importa: sao 101 caracteres, o que gera
+                    um codigo denso; espremido em 140px cada modulo ficava
+                    com ~3px, praticamente ilegivel filmado por outra camera. */}
+                <div className="qr-area"><QRCodeSVG
+                  value={ingresso.qrPayload}
+                  size={200}
+                  marginSize={4}
+                  level="L"
+                /></div>
 
                 <p className="seat-badge">Poltrona {ingresso.seatLabel}</p>
                 <p className="muted small">

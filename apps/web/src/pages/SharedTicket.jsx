@@ -40,9 +40,17 @@ export function SharedTicket() {
 
       <div
         className="card ticket-card"
-        style={{ maxWidth: 220, margin: "1.5rem auto" }}
+        style={{ maxWidth: 300, margin: "1.5rem auto" }}
       >
-        <QRCodeSVG value={dados.qrPayload} size={160} />
+        {/* Esta e a tela que o cliente costuma apresentar na portaria, entao
+            o codigo aqui e o maior de todos. marginSize=4 e a zona de
+            silencio exigida pela especificacao (o padrao da lib e zero). */}
+        <div className="qr-area"><QRCodeSVG
+          value={dados.qrPayload}
+          size={240}
+          marginSize={4}
+          level="L"
+        /></div>
         <p className="seat-badge">Poltrona {dados.seatLabel}</p>
         <p className="muted small">
           {rotuloStatus[dados.status] || dados.status}
