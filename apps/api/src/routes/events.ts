@@ -6,6 +6,7 @@ import { seatsRouter } from "./seats";
 import { optionalAuth } from "../middleware/auth";
 import { liberarReservasVencidas } from "./seats";
 import { buildSeatGrid } from "../domain/seats";
+import { montarRelatorio } from "../domain/report";
 
 export const eventsRouter = Router();
 
@@ -32,9 +33,11 @@ eventsRouter.get("/", async (req, res) => {
 
   const events = await prisma.event.findMany({
     where: {
-      // Evento cancelado some da vitrine publica -- mas continua visivel
-      // para o organizador, em /mine/list.
+      // Cancelado ou encerrado some da vitrine publica -- mas continua
+      // visivel para o organizador, em /mine/list. Nao faz sentido oferecer
+      // compra de uma sessao que nao vai acontecer ou que ja acabou.
       canceledAt: null,
+      closedAt: null,
       ...(q
         ? {
             OR: [
@@ -80,6 +83,7 @@ eventsRouter.get("/mine/list", requireAuth, requireRole("ORGANIZER"), async (req
         ...comDados,
         hasSold: vendidos > 0,
         canceled: Boolean(evento.canceledAt),
+        closed: Boolean(evento.closedAt),
       };
     })
   );
@@ -319,4 +323,91 @@ eventsRouter.post("/:id/cancel", requireAuth, requireRole("ORGANIZER"), async (r
   ]);
 
   res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+// Encerramento da sessao e relatorio final
+// ---------------------------------------------------------------------------
+
+/**
+ * Encerrar NAO e o mesmo que cancelar.
+ *
+ *   cancelar  -> a sessao nao vai acontecer; ingressos sao invalidados e as
+ *                poltronas liberadas.
+ *   encerrar  -> a sessao aconteceu e acabou; nada mais muda. E o que torna
+ *                o relatorio final estavel: sem isso, alguem poderia comprar
+ *                ou validar um ingresso depois do relatorio emitido, e os
+ *                numeros deixariam de bater.
+ */
+eventsRouter.post("/:id/close", requireAuth, requireRole("ORGANIZER"), async (req, res) => {
+  const event = await prisma.event.findUnique({ where: { id: String(req.params.id) } });
+
+  if (!event) {
+    res.status(404).json({ error: "Evento nao encontrado." });
+    return;
+  }
+  if (event.organizerId !== req.user!.id) {
+    res.status(403).json({ error: "Voce nao organiza este evento." });
+    return;
+  }
+  if (event.canceledAt) {
+    res.status(409).json({ error: "Evento cancelado nao pode ser encerrado." });
+    return;
+  }
+  if (event.closedAt) {
+    res.status(409).json({ error: "Este evento ja foi encerrado." });
+    return;
+  }
+
+  await prisma.$transaction([
+    prisma.event.update({
+      where: { id: event.id },
+      data: { closedAt: new Date() },
+    }),
+    // Reservas temporarias em aberto perdem o sentido: ninguem mais paga.
+    prisma.seat.updateMany({
+      where: { eventId: event.id, status: "HELD" },
+      data: { status: "AVAILABLE", holdExpiresAt: null, holdByUserId: null },
+    }),
+  ]);
+
+  res.json({ ok: true });
+});
+
+eventsRouter.get("/:id/report", requireAuth, requireRole("ORGANIZER"), async (req, res) => {
+  const event = await prisma.event.findUnique({ where: { id: String(req.params.id) } });
+
+  if (!event) {
+    res.status(404).json({ error: "Evento nao encontrado." });
+    return;
+  }
+  if (event.organizerId !== req.user!.id) {
+    res.status(403).json({ error: "Voce nao organiza este evento." });
+    return;
+  }
+
+  const tickets = await prisma.ticket.findMany({
+    where: { seat: { eventId: event.id } },
+    include: { reservation: true },
+  });
+
+  const relatorio = montarRelatorio(
+    tickets.map((t) => ({ status: t.status, clientId: t.reservation.clientId })),
+    event.price,
+    event.roomRows * event.roomSeatsPerRow
+  );
+
+  res.json({
+    evento: {
+      id: event.id,
+      title: event.title,
+      date: event.date,
+      location: event.location,
+      price: event.price,
+      encerrado: Boolean(event.closedAt),
+      closedAt: event.closedAt,
+      cancelado: Boolean(event.canceledAt),
+    },
+    ...relatorio,
+  });
 });

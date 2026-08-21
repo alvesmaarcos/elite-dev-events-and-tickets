@@ -2,8 +2,8 @@
 
 
 ## Back-End
-NodeJS com JavaScript.
-Porquê: Pela conveniência de já utilizar React com JS no Front-End.
+NodeJS com TypeScript.
+Porquê: Inicialmente idealizei com JS, mas foi extremamente importante a troca, ainda na idealização, para TypeScript, pelos benefícios de se utilizar de uma linguagem fortemente tipada e compilada, pois tornou o ambiente em execução muito mais seguro a falhas. Além disso, a ORM Prisma tem maior integração com TS.
 
 
 ## Framework do back-end
@@ -17,10 +17,8 @@ Porquê: O processo da Ticketmaster era verboso e a aprovação do cadastro teri
 
 
 ## Fluxo de reserva de ingresso
-Dentre as opções, mapa de assentos e quantidade de ingressos, escolhi quantidade de ingressos.
-O mapa de assentos exigiria uma grade interativa e maior robustez no momento de controle de condições de corrida, para evitar que duas ou mais pessoas tentem comprar o mesmo ingresso, pois poderia ocorrer com alta frequência. Já no controle pela quantidade de ingressos, esse problema seria rado, considerando que essas condições de corrida poderiam ocorrer apenas no último ingressso de cada lote.
-<br>
-- Sendo assim, por questões de otimização e prazo, o fluxo escolhido foi <b>quantidade de ingressos<b>
+Dentre as opções, mapa de assentos e quantidade de ingressos, escolhi mapa de assentos.
+Me baseei também em um aplicativo de cinema local, no qual é possível escolher dinamicamente a quantidade de ingressos escolhida, de forma que basta selecionar as poltronas e o valor será somado automaticamente.
 
 ## Banco de Dados
 PostgreSQL
@@ -31,5 +29,8 @@ Porquê: É relacional e possuo bastante familiaridade e confiança para utiliz�
 Monorepo com npm workspaces.
 Apesar do desafio não ter mencionado este quesito, achei importante mencionar qual a organização das pastas que escolhi seguir. Aqui o objetivo foi evitar complexidade organizacional, devido à natureza do projeto.
 
-## A decidir e planejar
-Ainda não planejei com clareza como ocorrerá o fluxo de geração do QR Code do cliente e a validação da portaria.
+## Simulação de pagamentos
+Por fins testáveis, a simulação de recusa e aceite dos pagamentos dos ingressos foi feita simplesmente por dois botões de "aceitar pagamento" e "recusar" na seção de compra de assentos.
+
+## Fluxo de verificação de QR Code
+A portaria acessa a seção da aplicação dedicada à sua área e escaneia o QR Code que o cliente gerou a partir da seção "Meus ingressos" no perfil.

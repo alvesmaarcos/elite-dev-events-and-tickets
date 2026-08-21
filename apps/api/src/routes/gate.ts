@@ -50,6 +50,7 @@ gateRouter.post("/validate", requireAuth, requireRole("GATE"), async (req, res) 
       usedAt: ticket.usedAt,
       eventId: ticket.seat.eventId,
       eventCanceledAt: ticket.seat.event.canceledAt,
+      eventClosedAt: ticket.seat.event.closedAt,
     },
     parsed.data.eventId
   );
