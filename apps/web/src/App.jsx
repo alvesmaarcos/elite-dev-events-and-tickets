@@ -5,6 +5,8 @@ import { EventsList } from "./pages/EventsList";
 import { EventDetail } from "./pages/EventDetail";
 import { OrganizerDashboard } from "./pages/OrganizerDashboard";
 import { MyTickets } from "./pages/MyTickets";
+import { Gate } from "./pages/Gate";
+import { SharedTicket } from "./pages/SharedTicket";
 
 function Nav() {
   const { session, logout } = useAuth();
@@ -25,6 +27,7 @@ function Nav() {
           <Link to="/meus-ingressos">Meus ingressos</Link>
         )}
         {session?.role === "ORGANIZER" && <Link to="/organizador">Painel</Link>}
+        {session?.role === "GATE" && <Link to="/portaria">Portaria</Link>}
       </nav>
 
       <div>
@@ -51,6 +54,8 @@ export default function App() {
           <Route path="/eventos/:id" element={<EventDetail />} />
           <Route path="/organizador" element={<OrganizerDashboard />} />
           <Route path="/meus-ingressos" element={<MyTickets />} />
+          <Route path="/portaria" element={<Gate />} />
+          <Route path="/ingresso/:code" element={<SharedTicket />} />
           <Route path="/login" element={<Login />} />
         </Routes>
       </main>
