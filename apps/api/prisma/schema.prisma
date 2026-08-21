@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+enum Role {
+  ORGANIZER
+  CLIENT
+  GATE
+}
+model User {
+  id        String @id @default(cuid())
+  email     String @unique
+  password  String
+  name      String
+  role      Role
+  events    Event[]
+  createdAt DateTime @default(now())
+}
+model Event {
+  id             String   @id @default(cuid())
+  title          String
+  description    String?
+  posterUrl      String?
+  externalSource String?
+  externalId     String?
+  date           DateTime
+  location       String
+  price          Float
+  organizerId    String
+  organizer      User     @relation(fields: [organizerId], references: [id])
+  createdAt      DateTime @default(now())
+}
+
