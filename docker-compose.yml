@@ -1,13 +1,54 @@
 services:
   db:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: elitedev
       POSTGRES_PASSWORD: elitedev
       POSTGRES_DB: elitedev
     ports:
+      # 5433 no host porque a 5432 costuma estar ocupada por um Postgres
+      # instalado na maquina. Dentro da rede do Docker os conteineres se
+      # falam pela porta interna (5432), como no DATABASE_URL abaixo.
       - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      # O Postgres demora alguns segundos para aceitar conexoes depois que o
+      # conteiner sobe. Sem isto a API tentaria migrar num banco que ainda
+      # nao responde e morreria.
+      test: ["CMD-SHELL", "pg_isready -U elitedev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./apps/api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://elitedev:elitedev@db:5432/elitedev?schema=public
+      JWT_SECRET: dev-jwt-secret-trocar-em-producao
+      QR_SECRET: dev-qr-secret-trocar-em-producao
+      TMDB_API_KEY: "${TMDB_API_KEY:-}"
+      PORT: "3333"
+      CORS_ORIGIN: "http://localhost:5173"
+    ports:
+      - "3333:3333"
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        VITE_API_URL: "http://localhost:3333"
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
+
 volumes:
   db_data:
