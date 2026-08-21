@@ -83,6 +83,7 @@ export function Login() {
         <ul>
           <li>organizador@gmail.com</li>
           <li>cliente1@gmail.com</li>
+          <li>cliente2@gmail.com</li>
           <li>portaria@gmail.com</li>
           <li>loja@gmail.com</li>
         </ul>
