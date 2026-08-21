@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import { Modal } from "../components/Modal";
 import { SeatSelection } from "../components/SeatSelection";
+import { Poster } from "../components/Poster";
 
 export function EventsList() {
   const [events, setEvents] = useState([]);
@@ -53,21 +54,39 @@ export function EventsList() {
       {carregando && <p>Carregando...</p>}
       {!carregando && events.length === 0 && <p>Nenhum filme em cartaz no momento.</p>}
 
-      <div className="grid">
+      {/* Mesma vitrine que o organizador ve no painel: o poster e o que faz
+          reconhecer o filme de relance. O que muda e a informacao embaixo --
+          o cliente precisa saber onde, quando, quanto custa e quanto ainda
+          sobrou. */}
+      <div className="filmes-grid">
         {events.map((ev) => (
           <button
             type="button"
             key={ev.id}
-            className="card evento-card"
+            className="filme-card sessao-card"
             onClick={() => setAberto(ev)}
+            // O conteudo do card e visual (poster, titulo, numeros soltos).
+            // Um leitor de tela leria essa colagem fora de ordem; o rotulo
+            // diz de uma vez o que o botao faz.
+            aria-label={`${ev.title} - escolher poltronas`}
           >
-            <h3>{ev.title}</h3>
-            <p className="muted small">{ev.location}</p>
-            <p className="muted small">
-              {new Date(ev.date).toLocaleString("pt-BR")}
-            </p>
-            <p className="price">R$ {ev.price.toFixed(2)}</p>
-            <p className="muted small">{ev.available} poltronas livres</p>
+            <Poster url={ev.posterUrl} titulo={ev.title} />
+
+            <div className="filme-info">
+              <h4 title={ev.title}>{ev.title}</h4>
+
+              <p className="muted small">
+                {new Date(ev.date).toLocaleString("pt-BR")}
+              </p>
+              <p className="muted small">{ev.location}</p>
+
+              <p className="sessao-rodape">
+                <span className="price">R$ {ev.price.toFixed(2)}</span>
+                <span className="muted small">
+                  {ev.available} {ev.available === 1 ? "livre" : "livres"}
+                </span>
+              </p>
+            </div>
           </button>
         ))}
       </div>

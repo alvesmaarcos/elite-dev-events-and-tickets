@@ -607,3 +607,47 @@ button.danger:hover { background: rgba(209,106,90,.12); }
   .hero::before { background: rgba(20, 17, 15, .8); }
   .parede { opacity: .35; }
 }
+
+/* =========================================================
+   Card de sessao (vitrine do cliente)
+   ========================================================= */
+
+/* O card e um <button> para ser clicavel pelo teclado tambem. Sem estes
+   ajustes ele herdaria a aparencia do botao laranja da folha global. */
+button.filme-card {
+  width: 100%;
+  padding: 0;
+  font: inherit;
+  font-weight: 400;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.sessao-card .filme-info { gap: .3rem; }
+.sessao-card .filme-info p { margin: 0; }
+
+/* Preco e disponibilidade ficam na mesma linha, colados no rodape do card:
+   sao as duas informacoes que decidem a compra. O margin-top auto empurra o
+   par para baixo mesmo quando o titulo ocupa uma linha so. */
+.sessao-rodape {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .5rem;
+  margin-top: auto;
+  padding-top: .45rem;
+}
+
+/* Substituto do poster: mesmo retangulo, com o titulo no lugar da arte.
+   Precisa parecer intencional -- um retangulo vazio pareceria erro. */
+.filme-poster-vazio {
+  padding: .8rem;
+  text-align: center;
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .22em;
+  text-indent: .22em;
+  text-transform: uppercase;
+  background: linear-gradient(160deg, var(--surface-2), #191512);
+}
