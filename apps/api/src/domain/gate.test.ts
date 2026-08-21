@@ -2,7 +2,13 @@ import { describe, it, expect } from "vitest";
 import { decideGateResult, GateTicketInput } from "./gate";
 
 function ingresso(over: Partial<GateTicketInput> = {}): GateTicketInput {
-  return { status: "VALID", usedAt: null, eventId: "evento-1", ...over };
+  return {
+    status: "VALID",
+    usedAt: null,
+    eventId: "evento-1",
+    eventCanceledAt: null,
+    ...over,
+  };
 }
 
 describe("decideGateResult", () => {
@@ -36,6 +42,38 @@ describe("decideGateResult", () => {
   it("avisa sobre a sessao errada antes de avisar que ja foi usado", () => {
     const decisao = decideGateResult(
       ingresso({ status: "USED", usedAt: new Date() }),
+      "evento-2"
+    );
+
+    expect(decisao.result).toBe("EVENTO_ERRADO");
+  });
+});
+
+describe("decideGateResult com cancelamentos", () => {
+  it("recusa ingresso cancelado pelo cliente", () => {
+    expect(decideGateResult(ingresso({ status: "CANCELED" }), "evento-1").result)
+      .toBe("CANCELADO");
+  });
+
+  it("recusa quando a sessao inteira foi cancelada", () => {
+    expect(decideGateResult(ingresso({ eventCanceledAt: new Date() }), "evento-1").result)
+      .toBe("EVENTO_CANCELADO");
+  });
+
+  // Ordem: quem esta na fila precisa saber que a sessao caiu, e nao achar
+  // que o problema e do ingresso dele em particular.
+  it("avisa da sessao cancelada antes de avisar do ingresso cancelado", () => {
+    const decisao = decideGateResult(
+      ingresso({ status: "CANCELED", eventCanceledAt: new Date() }),
+      "evento-1"
+    );
+
+    expect(decisao.result).toBe("EVENTO_CANCELADO");
+  });
+
+  it("evento errado continua tendo prioridade sobre tudo", () => {
+    const decisao = decideGateResult(
+      ingresso({ status: "CANCELED", eventCanceledAt: new Date() }),
       "evento-2"
     );
 

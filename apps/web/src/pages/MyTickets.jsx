@@ -9,13 +9,43 @@ const rotuloStatus = {
   CANCELED: "Cancelado",
 };
 
+const PRAZO_CANCELAMENTO_HORAS = 2;
+
+// Esta checagem no front so serve para ESCONDER um botao que nao funcionaria.
+// A regra de verdade e a do servidor: se as duas discordarem (relogio do
+// usuario errado, por exemplo), quem manda e o back, e o cliente ve o motivo.
+function podeCancelar(ingresso, dataDoEvento) {
+  if (ingresso.status !== "VALID") return false;
+
+  const horasRestantes =
+    (new Date(dataDoEvento).getTime() - Date.now()) / (1000 * 60 * 60);
+
+  return horasRestantes > PRAZO_CANCELAMENTO_HORAS;
+}
+
 export function MyTickets() {
   const { session, token } = useAuth();
   const [reservas, setReservas] = useState([]);
+  const [erro, setErro] = useState(null);
 
-  useEffect(() => {
+  function carregar() {
     if (token) api.meusIngressos(token).then(setReservas);
-  }, [token]);
+  }
+
+  useEffect(carregar, [token]);
+
+  async function cancelar(ticketId) {
+    if (!window.confirm("Cancelar este ingresso? A poltrona voltara para o mapa."))
+      return;
+
+    setErro(null);
+    try {
+      await api.cancelarIngresso(token, ticketId);
+      carregar();
+    } catch (e) {
+      setErro(e.message);
+    }
+  }
 
   if (!session) {
     return (
@@ -26,6 +56,8 @@ export function MyTickets() {
   return (
     <div className="page">
       <h1>Meus ingressos</h1>
+
+      {erro && <p className="error">{erro}</p>}
 
       {reservas.length === 0 && (
         <p className="muted">Voce ainda nao tem ingressos.</p>
@@ -60,6 +92,16 @@ export function MyTickets() {
                   value={`${window.location.origin}/ingresso/${ingresso.code}`}
                   onFocus={(e) => e.target.select()}
                 />
+
+                {podeCancelar(ingresso, reserva.event.date) && (
+                  <button
+                    className="danger"
+                    style={{ marginTop: ".6rem" }}
+                    onClick={() => cancelar(ingresso.id)}
+                  >
+                    Cancelar ingresso
+                  </button>
+                )}
               </div>
             ))}
           </div>

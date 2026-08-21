@@ -75,5 +75,15 @@ export const api = {
     // publica: quem recebeu o link compartilhado nao tem conta
     ingressoCompartilhado: (code) => request(`/tickets/share/${code}`),
 
+    // --- cancelamento e gestao ---
+    cancelarIngresso: (token, ticketId) =>
+      request(`/tickets/${ticketId}/cancel`, { method: "POST", token }),
+
+    atualizarEvento: (token, eventId, payload) =>
+      request(`/events/${eventId}`, { method: "PATCH", body: payload, token }),
+
+    cancelarEvento: (token, eventId) =>
+      request(`/events/${eventId}/cancel`, { method: "POST", token }),
+
 };
 
