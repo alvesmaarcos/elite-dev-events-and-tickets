@@ -7,6 +7,7 @@ function ingresso(over: Partial<GateTicketInput> = {}): GateTicketInput {
     usedAt: null,
     eventId: "evento-1",
     eventCanceledAt: null,
+    eventClosedAt: null,
     ...over,
   };
 }
@@ -78,5 +79,20 @@ describe("decideGateResult com cancelamentos", () => {
     );
 
     expect(decisao.result).toBe("EVENTO_ERRADO");
+  });
+});
+
+describe("decideGateResult com sessao encerrada", () => {
+  it("recusa quando o organizador ja encerrou a sessao", () => {
+    expect(decideGateResult(ingresso({ eventClosedAt: new Date() }), "evento-1").result)
+      .toBe("EVENTO_ENCERRADO");
+  });
+
+  it("sessao cancelada tem prioridade sobre sessao encerrada", () => {
+    const decisao = decideGateResult(
+      ingresso({ eventCanceledAt: new Date(), eventClosedAt: new Date() }),
+      "evento-1"
+    );
+    expect(decisao.result).toBe("EVENTO_CANCELADO");
   });
 });

@@ -15,13 +15,15 @@ export type GateResultCode =
   | "JA_UTILIZADO"
   | "EVENTO_ERRADO"
   | "CANCELADO"
-  | "EVENTO_CANCELADO";
+  | "EVENTO_CANCELADO"
+  | "EVENTO_ENCERRADO";
 
 export interface GateTicketInput {
   status: "VALID" | "USED" | "CANCELED";
   usedAt: Date | null;
   eventId: string;
   eventCanceledAt: Date | null;
+  eventClosedAt: Date | null;
 }
 
 export interface GateDecision {
@@ -46,6 +48,15 @@ export function decideGateResult(
   // dela, quando na verdade todo mundo esta na mesma situacao.
   if (ticket.eventCanceledAt) {
     return { result: "EVENTO_CANCELADO", reason: "Esta sessao foi cancelada." };
+  }
+
+  // Encerrado vem antes do estado do ingresso: se a sessao ja acabou, o
+  // problema nao e o ingresso da pessoa.
+  if (ticket.eventClosedAt) {
+    return {
+      result: "EVENTO_ENCERRADO",
+      reason: "Esta sessao ja foi encerrada pelo organizador.",
+    };
   }
 
   if (ticket.status === "CANCELED") {

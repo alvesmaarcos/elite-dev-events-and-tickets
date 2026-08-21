@@ -199,9 +199,8 @@ Como a divisão de trabalho funcionou na prática:
   adiante.
 
 O que eu **não** fiz: aceitar código gerado sem entender, nem deixar a IA
-escolher a arquitetura. O desafio pede para evitar "AI slop", e a forma de
-evitar isso não é esconder o uso da ferramenta — é conseguir defender cada
-decisão que está no código.
+escolher a arquitetura. O desafio pede para evitar AI slop, e a forma que vir 
+para assegurar isto é conseguir defender cada decisão que está no código.
 
 ---
 

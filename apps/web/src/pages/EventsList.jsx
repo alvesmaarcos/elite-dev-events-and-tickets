@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
+import { useAuth } from "../context/AuthContext";
 import { Modal } from "../components/Modal";
 import { SeatSelection } from "../components/SeatSelection";
 import { Poster } from "../components/Poster";
 
 export function EventsList() {
+  const { session, token } = useAuth();
+
   const [events, setEvents] = useState([]);
   const [q, setQ] = useState("");
   const [carregando, setCarregando] = useState(true);
 
-  // Evento aberto no modal. null = nenhum, e so a lista aparece.
+  // Evento aberto no modal de compra. null = nenhum, e so a lista aparece.
   const [aberto, setAberto] = useState(null);
+  const [relatorio, setRelatorio] = useState(null);
 
   async function carregar(busca = "") {
     setCarregando(true);
@@ -29,6 +33,26 @@ export function EventsList() {
     setAberto(null);
     // A compra pode ter mudado a disponibilidade: recarrega para os numeros
     // da lista nao ficarem defasados.
+    carregar(q);
+  }
+
+  // O organizador enxerga acoes extras nas sessoes que sao dele, sem
+  // precisar ir ate o painel.
+  function ehMinhaSessao(ev) {
+    return session?.role === "ORGANIZER" && ev.organizerId === session.id;
+  }
+
+  async function encerrar(ev) {
+    const aviso =
+      `Encerrar "${ev.title}"?\n\n` +
+      "A sessao para de aceitar compras e validacoes na portaria, e o " +
+      "relatorio final passa a ser definitivo.";
+
+    if (!window.confirm(aviso)) return;
+
+    await api.encerrarEvento(token, ev.id);
+    setRelatorio(await api.relatorioDoEvento(token, ev.id));
+    // Sessao encerrada sai da vitrine: recarrega para ela desaparecer daqui.
     carregar(q);
   }
 
@@ -94,6 +118,16 @@ export function EventsList() {
       {aberto && (
         <Modal titulo={aberto.title} onClose={fecharModal} largura={780}>
           <SeatSelection eventId={aberto.id} onConcluido={fecharModal} />
+        </Modal>
+      )}
+
+      {relatorio && (
+        <Modal
+          titulo={`Relatorio: ${relatorio.evento.title}`}
+          onClose={() => setRelatorio(null)}
+          largura={560}
+        >
+          <RelatorioEvento dados={relatorio} />
         </Modal>
       )}
     </div>
