@@ -360,7 +360,7 @@ export function OrganizerDashboard() {
       )}
 
       <section>
-        <h2>Meus eventos publicados</h2>
+        <h2>Minhas sessoes publicadas</h2>
         <div className="grid">
           {meusEventos.map((ev) => (
             <div key={ev.id} className="card">
@@ -474,42 +474,21 @@ export function OrganizerDashboard() {
                 </div>
               ) : (
                 !ev.canceled && (
-                  <div className="acoes-evento">
-                    {/* Encerrada: so resta consultar o relatorio, que agora e
-                        definitivo. Editar ou cancelar deixaram de fazer
-                        sentido. */}
-                    {ev.closed ? (
-                      <button type="button" onClick={() => verRelatorio(ev)}>
-                        Ver relatorio
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          className="secondary"
-                          onClick={() => abrirEdicao(ev)}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          className="secondary"
-                          onClick={() => verRelatorio(ev)}
-                        >
-                          Relatorio
-                        </button>
-                        <button type="button" onClick={() => encerrarEvento(ev)}>
-                          Encerrar
-                        </button>
-                        <button
-                          type="button"
-                          className="danger"
-                          onClick={() => cancelarEvento(ev)}
-                        >
-                          Cancelar
-                        </button>
-                      </>
-                    )}
+                  <div className="button-row">
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => abrirEdicao(ev)}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      className="danger"
+                      onClick={() => cancelarEvento(ev)}
+                    >
+                      Cancelar sessao
+                    </button>
                   </div>
                 )
               )}

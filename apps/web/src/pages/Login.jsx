@@ -2,6 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
+// Cada papel tem um "inicio" diferente. Mandar todo mundo para a pagina
+// inicial obrigaria a portaria e o organizador a navegar ate o proprio
+// lugar de trabalho toda vez que entram.
+function destinoDoPapel(role) {
+  if (role === "ORGANIZER") return "/organizador";
+  if (role === "GATE") return "/portaria";
+  return "/filmes";
+}
+
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();   
@@ -15,8 +24,8 @@ export function Login() {
     setErro(null);
     setOcupado(true);
     try {
-      await login(email, password);
-      navigate("/");
+      const usuario = await login(email, password);
+      navigate(destinoDoPapel(usuario.role));
     } catch {
       setErro("E-mail ou senha invalidos.");
     } finally {

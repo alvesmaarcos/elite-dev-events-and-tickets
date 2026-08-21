@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/auth";
-import { fetchCatalog } from "../lib/tmdb";
+import { fetchCatalog, fetchShowcasePosters } from "../lib/tmdb";
 
 export const catalogRouter = Router();
 
@@ -20,5 +20,19 @@ catalogRouter.get("/tmdb", requireAuth, requireRole("ORGANIZER"), async (req, re
       error: "Falha ao consultar o catalogo externo.",
       detalhe: err instanceof Error ? err.message : String(err),
     });
+  }
+});
+
+// Publico -- e a unica rota do catalogo que nao exige login, porque alimenta
+// a vitrine da pagina inicial, vista por quem ainda nem tem conta.
+catalogRouter.get("/showcase", async (_req, res) => {
+  try {
+    res.json({ posters: await fetchShowcasePosters() });
+  } catch (err) {
+    console.error("[catalog] falha ao montar a vitrine:", err);
+    // A vitrine e enfeite. Se a TMDb estiver fora do ar, a pagina inicial
+    // continua de pe com o fundo liso -- devolver 502 aqui transformaria um
+    // detalhe visual em erro na porta de entrada do site.
+    res.json({ posters: [] });
   }
 });
