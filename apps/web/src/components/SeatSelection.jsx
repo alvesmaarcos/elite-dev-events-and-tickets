@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { SeatMap } from "./SeatMap";
+import { Poster } from "./Poster";
+import { FalhaAoCarregar } from "./FalhaAoCarregar";
+import { AvisoDeEspera } from "./AvisoDeEspera";
 
 const ETAPA = {
   ESCOLHENDO: "escolhendo",
@@ -30,18 +33,27 @@ export function SeatSelection({ eventId, onConcluido }) {
   const [erro, setErro] = useState(null);
   const [ocupado, setOcupado] = useState(false);
   const [ingressos, setIngressos] = useState([]);
+  const [falhaAoAbrir, setFalhaAoAbrir] = useState(null);
 
   const intervaloRef = useRef(null);
 
   function carregarMapa() {
-    if (eventId) api.getSeats(eventId, token).then(setSeats);
+    if (eventId) api.getSeats(eventId, token).then(setSeats).catch(setFalhaAoAbrir);
   }
 
-  useEffect(() => {
+  function carregarTudo() {
     if (!eventId) return;
-    api.getEvent(eventId).then(setEvent);
-    api.getSeats(eventId, token).then(setSeats);
-  }, [eventId, token]);
+    setFalhaAoAbrir(null);
+    // As duas juntas: sem o mapa nao da para escolher, sem a sessao nao da
+    // para mostrar preco. Se qualquer uma falhar, a tela inteira precisa
+    // dizer isso -- e nao abrir um modal vazio, sem explicacao.
+    Promise.all([
+      api.getEvent(eventId).then(setEvent),
+      api.getSeats(eventId, token).then(setSeats),
+    ]).catch(setFalhaAoAbrir);
+  }
+
+  useEffect(carregarTudo, [eventId, token]);
 
   // cronometro da reserva
   useEffect(() => {
@@ -121,7 +133,18 @@ export function SeatSelection({ eventId, onConcluido }) {
     }
   }
 
-  if (!event) return <p className="muted">Carregando...</p>;
+  if (falhaAoAbrir) {
+    return <FalhaAoCarregar erro={falhaAoAbrir} aoTentarDeNovo={carregarTudo} />;
+  }
+
+  if (!event) {
+    return (
+      <>
+        <p className="muted">Carregando...</p>
+        <AvisoDeEspera />
+      </>
+    );
+  }
 
   const total = event.price * selected.length;
   const minutos = String(Math.floor(restanteMs / 60000)).padStart(2, "0");
@@ -129,18 +152,31 @@ export function SeatSelection({ eventId, onConcluido }) {
 
   return (
     <div className="compra">
+      {/* O poster acompanha a compra: sem ele o modal abria so com titulo e
+          mapa, e o filme -- que e o motivo da compra -- sumia da tela. */}
       <div className="compra-cabecalho">
-        <p className="muted small">
-          {event.location} — {new Date(event.date).toLocaleString("pt-BR")}
-        </p>
-        <p>
-          <span className="price">R$ {event.price.toFixed(2)}</span>{" "}
-          <span className="muted small">por ingresso</span>
-          {"  ·  "}
-          <span className="muted small">
-            {event.available} de {event.capacity} poltronas livres
-          </span>
-        </p>
+        <div className="compra-poster">
+          <Poster url={event.posterUrl} titulo={event.title} />
+        </div>
+
+        <div className="compra-dados">
+          <p className="muted small">
+            {event.location} — {new Date(event.date).toLocaleString("pt-BR")}
+          </p>
+
+          {event.description && (
+            <p className="muted small sinopse">{event.description}</p>
+          )}
+
+          <p>
+            <span className="price">R$ {event.price.toFixed(2)}</span>{" "}
+            <span className="muted small">por ingresso</span>
+            {"  ·  "}
+            <span className="muted small">
+              {event.available} de {event.capacity} poltronas livres
+            </span>
+          </p>
+        </div>
       </div>
 
       {erro && <p className="error">{erro}</p>}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { ErroDeRede } from "../api/client";
 
 // Cada papel tem um "inicio" diferente. Mandar todo mundo para a pagina
 // inicial obrigaria a portaria e o organizador a navegar ate o proprio
@@ -26,8 +27,19 @@ export function Login() {
     try {
       const usuario = await login(email, password);
       navigate(destinoDoPapel(usuario.role));
-    } catch {
-      setErro("E-mail ou senha invalidos.");
+    } catch (e) {
+      // Antes, QUALQUER falha virava "e-mail ou senha invalidos" -- inclusive
+      // servidor fora do ar. A pessoa ficava conferindo a senha certa de novo
+      // e de novo enquanto o problema estava do outro lado.
+      if (e instanceof ErroDeRede) {
+        setErro(
+          "Servidor fora de alcance. Ele pode estar hibernando: tente de novo em alguns segundos."
+        );
+      } else if (e.status === 401) {
+        setErro("E-mail ou senha invalidos.");
+      } else {
+        setErro("Nao foi possivel entrar agora. " + e.message);
+      }
     } finally {
       setOcupado(false);
     }

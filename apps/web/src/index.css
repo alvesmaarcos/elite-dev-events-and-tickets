@@ -612,17 +612,63 @@ button.danger:hover { background: rgba(209,106,90,.12); }
    Card de sessao (vitrine do cliente)
    ========================================================= */
 
-/* O card e um <button> para ser clicavel pelo teclado tambem. Sem estes
-   ajustes ele herdaria a aparencia do botao laranja da folha global. */
-button.filme-card {
+/* Corpo clicavel do card: precisa parecer o card inteiro, mas ser um botao
+   proprio, para conviver com as acoes do organizador logo abaixo -- botao
+   dentro de botao seria HTML invalido. Sem estes ajustes ele herdaria a
+   aparencia do botao laranja da folha global. */
+.sessao-corpo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   width: 100%;
+  margin: 0;
   padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
   font: inherit;
   font-weight: 400;
   text-align: left;
   color: var(--ink);
   cursor: pointer;
 }
+.sessao-corpo:hover { background: none; filter: none; }
+
+/* Acoes do organizador dentro do card. O card nao tem padding (o poster
+   encosta na borda), entao o respiro vem daqui. */
+.acoes-evento {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .4rem;
+  padding: 0 .7rem .7rem;
+}
+.acoes-evento button { font-size: .78rem; padding: .4rem .5rem; width: 100%; }
+
+/* =========================================================
+   Relatorio de encerramento
+   ========================================================= */
+.relatorio-numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: .7rem;
+  margin: 1.2rem 0;
+}
+.relatorio-item {
+  background: var(--surface-2);
+  border: 1px solid #3a3128;
+  border-radius: var(--radius);
+  padding: .8rem;
+  text-align: center;
+}
+.relatorio-item strong { display: block; font-size: 1.6rem; line-height: 1.1; }
+.relatorio-item span { font-size: .72rem; color: var(--muted); }
+/* O numero que o organizador procura primeiro: quantos entraram de fato. */
+.relatorio-item.destaque { border-color: var(--accent); }
+.relatorio-item.destaque strong { color: var(--accent); }
+
+.relatorio-tabela { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .88rem; }
+.relatorio-tabela td { padding: .5rem 0; border-bottom: 1px solid var(--surface-2); }
+.relatorio-tabela td:last-child { text-align: right; font-weight: 600; }
 
 .sessao-card .filme-info { gap: .3rem; }
 .sessao-card .filme-info p { margin: 0; }
@@ -650,4 +696,119 @@ button.filme-card {
   text-indent: .22em;
   text-transform: uppercase;
   background: linear-gradient(160deg, var(--surface-2), #191512);
+}
+
+/* =========================================================
+   Estados de carregamento e de falha
+   ========================================================= */
+
+/* Cards fantasma: mesmo formato dos de verdade, sem conteudo. O brilho que
+   atravessa o bloco e o que diz "isto esta vindo" em vez de "isto esta
+   quebrado". */
+.fantasma { pointer-events: none; }
+
+.fantasma-bloco {
+  background: linear-gradient(
+    100deg,
+    var(--surface-2) 30%,
+    #342c24 50%,
+    var(--surface-2) 70%
+  );
+  background-size: 220% 100%;
+  animation: fantasma-brilho 1.4s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.fantasma .filme-poster { border-radius: 0; }
+
+.fantasma-linha { height: .7rem; }
+.fantasma-linha.curta { width: 55%; }
+
+@keyframes fantasma-brilho {
+  from { background-position: 130% 0; }
+  to   { background-position: -30% 0; }
+}
+
+/* Movimento repetido e infinito e exatamente o que incomoda quem tem
+   sensibilidade a isso; o bloco cinza sozinho ja comunica a espera. */
+@media (prefers-reduced-motion: reduce) {
+  .fantasma-bloco { animation: none; }
+}
+
+.aviso-espera { margin-top: 1.2rem; text-align: center; }
+
+.falha-carregar {
+  margin-top: 1.5rem;
+  padding: 1.4rem;
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-left: 3px solid var(--error);
+  border-radius: var(--radius);
+}
+.falha-carregar p { margin: 0 0 .4rem; }
+.falha-carregar button { margin-top: .8rem; }
+
+/* =========================================================
+   Selos de disponibilidade
+   ========================================================= */
+
+/* Urgencia real, calculada a partir do que sobrou -- nao um enfeite fixo em
+   todo card. Por isso "Ultimos 4" e nao "Corra!": o numero e verificavel. */
+.selo {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  padding: .18rem .45rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.selo-ultimos {
+  color: var(--accent);
+  background: rgba(232, 161, 58, .14);
+  border: 1px solid rgba(232, 161, 58, .45);
+}
+.selo-esgotado {
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid #3a3128;
+}
+
+/* =========================================================
+   Cabecalho da compra, com o poster do filme
+   ========================================================= */
+.compra-cabecalho {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.compra-poster {
+  width: 104px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.compra-dados { flex: 1; min-width: 0; }
+.compra-dados p { margin: .25rem 0; }
+
+/* Sinopse da TMDb costuma ser longa; o mapa de poltronas e que precisa do
+   espaco. Quatro linhas dao o contexto do filme sem empurrar a escolha para
+   fora da tela. */
+.sinopse {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.45;
+}
+
+/* Na tela estreita o poster deitado ao lado do texto deixaria as duas
+   colunas espremidas; empilhado, cada um usa a largura inteira. */
+@media (max-width: 520px) {
+  .compra-cabecalho { gap: .8rem; }
+  .compra-poster { width: 76px; }
+  .sinopse { -webkit-line-clamp: 3; }
 }

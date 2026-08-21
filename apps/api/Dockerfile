@@ -29,6 +29,13 @@ ARG DATABASE_URL="postgresql://build:build@localhost:5432/build"
 RUN npx prisma generate
 RUN npm run build
 
+# Depois do build, de proposito: com NODE_ENV=production o "npm install" la
+# em cima pularia as devDependencies, e o tsc e uma delas. Aqui embaixo ela ja
+# cumpriu seu papel, e a variavel passa a valer so em tempo de execucao --
+# que e onde ela importa, porque e ela que faz o Express parar de expor stack
+# trace nas respostas de erro.
+ENV NODE_ENV=production
+
 EXPOSE 3333
 
 # migrate deploy (nao "migrate dev"): aplica as migrations pendentes sem
