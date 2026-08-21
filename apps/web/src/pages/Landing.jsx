@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { Poster } from "../components/Poster";
 
 const COLUNAS = 6;
 
@@ -31,17 +32,28 @@ function montarParede(posters) {
   });
 }
 
+const VER_FILMES = { para: "/filmes", texto: "Ver filmes em cartaz" };
+
 /**
- * Segundo botao do hero: depende de quem esta olhando.
+ * Botoes do hero: dependem de quem esta olhando.
  *
  * Quem ainda nao entrou precisa da porta de entrada; quem ja entrou precisa
  * do proprio lugar de trabalho -- e nao de um "Entrar" que nao faz sentido.
+ * A portaria e o unico papel que NAO recebe a vitrine: ela nao compra nem
+ * escolhe filme, so le QR Code na entrada da sala.
  */
-function atalhoDoUsuario(session) {
-  if (!session) return { para: "/login", texto: "Entrar" };
-  if (session.role === "ORGANIZER") return { para: "/organizador", texto: "Painel do organizador" };
-  if (session.role === "GATE") return { para: "/portaria", texto: "Abrir a portaria" };
-  return { para: "/meus-ingressos", texto: "Meus ingressos" };
+function acoesDoHero(session) {
+  if (!session) return [VER_FILMES, { para: "/login", texto: "Entrar" }];
+
+  if (session.role === "GATE") {
+    return [{ para: "/portaria", texto: "Abrir a portaria" }];
+  }
+
+  if (session.role === "ORGANIZER") {
+    return [VER_FILMES, { para: "/organizador", texto: "Painel do organizador" }];
+  }
+
+  return [VER_FILMES, { para: "/meus-ingressos", texto: "Meus ingressos" }];
 }
 
 export function Landing() {
@@ -64,7 +76,7 @@ export function Landing() {
       .catch(() => {});
   }, []);
 
-  const atalho = atalhoDoUsuario(session);
+  const acoes = acoesDoHero(session);
 
   return (
     <div className="landing">
@@ -101,12 +113,15 @@ export function Landing() {
           </p>
 
           <div className="hero-acoes">
-            <Link to="/filmes" className="botao botao-grande">
-              Ver filmes em cartaz
-            </Link>
-            <Link to={atalho.para} className="botao botao-grande botao-vazado">
-              {atalho.texto}
-            </Link>
+            {acoes.map((acao, i) => (
+              <Link
+                key={acao.para}
+                to={acao.para}
+                className={`botao botao-grande ${i > 0 ? "botao-vazado" : ""}`}
+              >
+                {acao.texto}
+              </Link>
+            ))}
           </div>
         </div>
       </section>
@@ -137,7 +152,8 @@ export function Landing() {
         </div>
       </section>
 
-      {emCartaz.length > 0 && (
+      {/* A portaria nao ve a vitrine: nada aqui serve ao trabalho dela. */}
+      {session?.role !== "GATE" && emCartaz.length > 0 && (
         <section className="previa">
           <div className="previa-topo">
             <h2>Em cartaz agora</h2>
@@ -147,18 +163,7 @@ export function Landing() {
           <div className="filmes-grid">
             {emCartaz.map((ev) => (
               <Link key={ev.id} to={`/filmes/${ev.id}`} className="filme-card">
-                {ev.posterUrl ? (
-                  <img
-                    className="filme-poster"
-                    src={ev.posterUrl}
-                    alt={`Poster de ${ev.title}`}
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="filme-poster filme-poster-vazio">
-                    <span>sem poster</span>
-                  </div>
-                )}
+                <Poster url={ev.posterUrl} titulo={ev.title} />
 
                 <div className="filme-info">
                   <h4 title={ev.title}>{ev.title}</h4>

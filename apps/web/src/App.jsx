@@ -23,7 +23,9 @@ function Nav() {
       <Link to="/" className="brand">Elite Tickets</Link>
 
       <nav>
-        <Link to="/filmes">Em cartaz</Link>
+        {/* A portaria nao compra ingresso: a vitrine so tiraria espaco do
+            unico link que ela usa. */}
+        {session?.role !== "GATE" && <Link to="/filmes">Em cartaz</Link>}
         {session?.role === "CLIENT" && (
           <Link to="/meus-ingressos">Meus ingressos</Link>
         )}
