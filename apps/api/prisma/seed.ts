@@ -1,5 +1,7 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../src/lib/prisma";
+import { buildSeatGrid } from "../src/domain/seats";
+
 
 async function criarUsuarios() {
   const jaExiste = await prisma.user.findUnique({
@@ -41,20 +43,32 @@ async function criarEvento(organizerId: string) {
   const dataDoEvento = new Date();
   dataDoEvento.setDate(dataDoEvento.getDate() + 14);
 
-  await prisma.event.create({
+  const roomRows = 8;
+  const roomSeatsPerRow = 12;
+
+  const event = await prisma.event.create({
     data: {
-      title: "Filme 2",
-      description: "Filme com pipoca.",
+      title: "Duna: Parte Dois - Sessao Especial",
+      description: "Exibicao especial com pipoca inclusa.",
       externalSource: "tmdb",
       externalId: "mock-1",
       date: dataDoEvento,
       location: "Cine Centro, Sala 3",
       price: 35,
+      roomRows,
+      roomSeatsPerRow,
       organizerId,
     },
   });
 
-  console.log("Evento de exemplo criado.");
+  await prisma.seat.createMany({
+    data: buildSeatGrid(roomRows, roomSeatsPerRow).map((assento) => ({
+      ...assento,
+      eventId: event.id,
+    })),
+  });
+
+  console.log(`Evento de exemplo criado (sala ${roomRows}x${roomSeatsPerRow}).`);
 }
 
 async function main() {
