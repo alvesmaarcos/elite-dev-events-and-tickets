@@ -9,7 +9,7 @@ function agruparPorFileira(seats) {
   return [...fileiras.entries()].sort(([a], [b]) => a.localeCompare(b));
 }
 
-export function SeatMap({ seats, selected, onToggle }) {
+export function SeatMap({ seats, selected, onToggle, disabled }) {
   const fileiras = agruparPorFileira(seats);
 
   return (
@@ -21,7 +21,8 @@ export function SeatMap({ seats, selected, onToggle }) {
           <span className="seat-row-label">{letra}</span>
 
           {assentos.map((assento) => {
-            const ocupado = assento.status === "SOLD";
+            const seguradaPorOutro = assento.status === "HELD" && !assento.heldByMe;
+            const indisponivel = assento.status === "SOLD" || seguradaPorOutro;
             const escolhido = selected.includes(assento.label);
 
             return (
@@ -29,9 +30,13 @@ export function SeatMap({ seats, selected, onToggle }) {
                 type="button"
                 key={assento.label}
                 title={assento.label}
-                disabled={ocupado}
+                disabled={disabled || indisponivel}
                 className={`seat ${
-                  escolhido ? "seat-selected" : ocupado ? "seat-unavailable" : "seat-available"
+                  escolhido
+                    ? "seat-selected"
+                    : indisponivel
+                    ? "seat-unavailable"
+                    : "seat-available"
                 }`}
                 onClick={() => onToggle(assento.label)}
               >
