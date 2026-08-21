@@ -25,7 +25,12 @@ export function RelatorioEvento({ dados }) {
         {evento.location} — {new Date(evento.date).toLocaleString("pt-BR")}
       </p>
 
-      {evento.encerrado ? (
+      {evento.cancelado ? (
+        <p className="muted small">
+          Sessao cancelada — os ingressos emitidos foram invalidados e as
+          poltronas, liberadas.
+        </p>
+      ) : evento.encerrado ? (
         <p className="muted small">
           Encerrada em {new Date(evento.closedAt).toLocaleString("pt-BR")}.
         </p>

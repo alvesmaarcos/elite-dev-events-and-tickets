@@ -198,6 +198,179 @@ export function OrganizerDashboard() {
     }
   }
 
+  // Uma sessao esta "em cartaz" enquanto pode receber gente. Depois de
+  // encerrada ou cancelada ela vira historico: nao ha mais o que gerenciar,
+  // so o que consultar.
+  const emCartaz = meusEventos
+    .filter((ev) => !ev.canceled && !ev.closed)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  // Historico na ordem inversa: o que terminou por ultimo e o que o
+  // organizador acabou de fechar, e provavelmente o que ele veio ver.
+  const historico = meusEventos
+    .filter((ev) => ev.canceled || ev.closed)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  function cartaoDaSessao(ev) {
+    return (
+        <div key={ev.id} className="card">
+          <h4>{ev.title}</h4>
+          <p className="muted small">{ev.location}</p>
+          <p className="muted small">
+            {new Date(ev.date).toLocaleString("pt-BR")}
+          </p>
+
+          {/* Em cartaz, o numero util e quanto ainda da para vender. No
+              historico ele nao quer dizer mais nada -- o que importa e como
+              a sessao terminou, e a data disso. */}
+          {ev.canceled ? (
+            <p className="estado estado-cancelado">
+              Cancelada em {new Date(ev.canceledAt).toLocaleDateString("pt-BR")}
+            </p>
+          ) : ev.closed ? (
+            <p className="estado estado-encerrado">
+              Encerrada em {new Date(ev.closedAt).toLocaleDateString("pt-BR")}
+            </p>
+          ) : (
+            <p className="muted small">
+              {ev.available}/{ev.capacity} disponiveis
+            </p>
+          )}
+
+          {editandoId === ev.id ? (
+            <div className="form">
+              <label>
+                Data e hora
+                <input
+                  type="datetime-local"
+                  value={formEdicao.date}
+                  onChange={(e) =>
+                    setFormEdicao({ ...formEdicao, date: e.target.value })
+                  }
+                />
+              </label>
+              <label>
+                Local
+                <input
+                  value={formEdicao.location}
+                  onChange={(e) =>
+                    setFormEdicao({ ...formEdicao, location: e.target.value })
+                  }
+                />
+              </label>
+              <label>
+                Descricao
+                <input
+                  value={formEdicao.description}
+                  onChange={(e) =>
+                    setFormEdicao({ ...formEdicao, description: e.target.value })
+                  }
+                />
+              </label>
+
+              {ev.hasSold ? (
+                <p className="muted small">
+                  Ja ha ingressos vendidos: preco e tamanho da sala nao podem
+                  mais mudar.
+                </p>
+              ) : (
+                <>
+                  <label>
+                    Preco (R$)
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={formEdicao.price}
+                      onChange={(e) =>
+                        setFormEdicao({ ...formEdicao, price: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Fileiras
+                    <input
+                      type="number"
+                      min={1}
+                      max={26}
+                      value={formEdicao.roomRows}
+                      onChange={(e) =>
+                        setFormEdicao({ ...formEdicao, roomRows: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Assentos por fileira
+                    <input
+                      type="number"
+                      min={1}
+                      max={60}
+                      value={formEdicao.roomSeatsPerRow}
+                      onChange={(e) =>
+                        setFormEdicao({
+                          ...formEdicao,
+                          roomSeatsPerRow: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                </>
+              )}
+
+              {erroEdicao && <p className="error">{erroEdicao}</p>}
+
+              <div className="button-row">
+                <button type="button" onClick={() => salvarEdicao(ev)}>
+                  Salvar
+                </button>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => setEditandoId(null)}
+                >
+                  Cancelar edicao
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="acoes-evento">
+              {/* O relatorio acompanha a sessao para sempre: e a unica coisa
+                  que continua fazendo sentido depois que ela sai de cartaz. */}
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => verRelatorio(ev)}
+              >
+                Ver relatorio
+              </button>
+
+              {!ev.canceled && !ev.closed && (
+                <>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => abrirEdicao(ev)}
+                  >
+                    Editar
+                  </button>
+                  <button type="button" onClick={() => encerrarEvento(ev)}>
+                    Encerrar
+                  </button>
+                  <button
+                    type="button"
+                    className="danger"
+                    onClick={() => cancelarEvento(ev)}
+                  >
+                    Cancelar sessao
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+    );
+  }
+
   if (!session || session.role !== "ORGANIZER") {
     return <div className="page page-narrow">Area restrita a organizadores.</div>;
   }
@@ -364,7 +537,7 @@ export function OrganizerDashboard() {
       )}
 
       <section>
-        <h2>Minhas sessoes publicadas</h2>
+        <h2>Em cartaz</h2>
 
         {falhaNasSessoes && (
           <FalhaAoCarregar
@@ -373,140 +546,30 @@ export function OrganizerDashboard() {
           />
         )}
 
-        <div className="grid">
-          {meusEventos.map((ev) => (
-            <div key={ev.id} className="card">
-              <h4>
-                {ev.title}{" "}
-                {ev.canceled && <span className="muted small">(cancelado)</span>}
-                {ev.closed && <span className="muted small">(encerrado)</span>}
-              </h4>
-              <p className="muted small">{ev.location}</p>
-              <p className="muted small">
-                {new Date(ev.date).toLocaleString("pt-BR")}
-              </p>
-              <p className="muted small">
-                {ev.available}/{ev.capacity} disponiveis
-              </p>
+        {!falhaNasSessoes && emCartaz.length === 0 && (
+          <p className="muted small">
+            Nenhuma sessao aberta. Escolha um filme acima para publicar uma.
+          </p>
+        )}
 
-              {editandoId === ev.id ? (
-                <div className="form">
-                  <label>
-                    Data e hora
-                    <input
-                      type="datetime-local"
-                      value={formEdicao.date}
-                      onChange={(e) =>
-                        setFormEdicao({ ...formEdicao, date: e.target.value })
-                      }
-                    />
-                  </label>
-                  <label>
-                    Local
-                    <input
-                      value={formEdicao.location}
-                      onChange={(e) =>
-                        setFormEdicao({ ...formEdicao, location: e.target.value })
-                      }
-                    />
-                  </label>
-                  <label>
-                    Descricao
-                    <input
-                      value={formEdicao.description}
-                      onChange={(e) =>
-                        setFormEdicao({ ...formEdicao, description: e.target.value })
-                      }
-                    />
-                  </label>
+        <div className="grid">{emCartaz.map(cartaoDaSessao)}</div>
+      </section>
 
-                  {ev.hasSold ? (
-                    <p className="muted small">
-                      Ja ha ingressos vendidos: preco e tamanho da sala nao podem
-                      mais mudar.
-                    </p>
-                  ) : (
-                    <>
-                      <label>
-                        Preco (R$)
-                        <input
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          value={formEdicao.price}
-                          onChange={(e) =>
-                            setFormEdicao({ ...formEdicao, price: e.target.value })
-                          }
-                        />
-                      </label>
-                      <label>
-                        Fileiras
-                        <input
-                          type="number"
-                          min={1}
-                          max={26}
-                          value={formEdicao.roomRows}
-                          onChange={(e) =>
-                            setFormEdicao({ ...formEdicao, roomRows: e.target.value })
-                          }
-                        />
-                      </label>
-                      <label>
-                        Assentos por fileira
-                        <input
-                          type="number"
-                          min={1}
-                          max={60}
-                          value={formEdicao.roomSeatsPerRow}
-                          onChange={(e) =>
-                            setFormEdicao({
-                              ...formEdicao,
-                              roomSeatsPerRow: e.target.value,
-                            })
-                          }
-                        />
-                      </label>
-                    </>
-                  )}
+      {/* O historico e o que sobra depois que a sessao sai de cartaz. Fica
+          numa secao propria porque a leitura e outra: aqui nao ha o que
+          decidir, so o que consultar -- e o relatorio continua acessivel
+          indefinidamente. */}
+      <section>
+        <h2>Historico</h2>
 
-                  {erroEdicao && <p className="error">{erroEdicao}</p>}
-
-                  <div className="button-row">
-                    <button type="button" onClick={() => salvarEdicao(ev)}>
-                      Salvar
-                    </button>
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => setEditandoId(null)}
-                    >
-                      Cancelar edicao
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                !ev.canceled && (
-                  <div className="button-row">
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => abrirEdicao(ev)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      className="danger"
-                      onClick={() => cancelarEvento(ev)}
-                    >
-                      Cancelar sessao
-                    </button>
-                  </div>
-                )
-              )}
-            </div>
-          ))}
-        </div>
+        {historico.length === 0 ? (
+          <p className="muted small">
+            Sessoes encerradas e canceladas aparecem aqui, com o relatorio
+            final de cada uma.
+          </p>
+        ) : (
+          <div className="grid">{historico.map(cartaoDaSessao)}</div>
+        )}
       </section>
 
       {relatorio && (

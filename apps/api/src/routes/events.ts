@@ -219,6 +219,13 @@ eventsRouter.patch("/:id", requireAuth, requireRole("ORGANIZER"), async (req, re
     res.status(409).json({ error: "Sessao cancelada nao pode ser editada." });
     return;
   }
+  // Encerrada e historico: o relatorio final ja foi fechado em cima do preco
+  // e da sala que valiam naquele dia. Editar depois faria os numeros do
+  // relatorio deixarem de corresponder ao que aconteceu.
+  if (event.closedAt) {
+    res.status(409).json({ error: "Sessao encerrada nao pode ser editada." });
+    return;
+  }
 
   const parsed = editEventSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -297,6 +304,15 @@ eventsRouter.post("/:id/cancel", requireAuth, requireRole("ORGANIZER"), async (r
   }
   if (event.canceledAt) {
     res.status(409).json({ error: "Esta sessao ja esta cancelada." });
+    return;
+  }
+  // Cancelar invalida os ingressos emitidos -- e numa sessao encerrada eles
+  // ja foram usados na portaria. Nao da para desfazer uma sessao que
+  // aconteceu.
+  if (event.closedAt) {
+    res.status(409).json({
+      error: "Sessao encerrada nao pode ser cancelada: ela ja aconteceu.",
+    });
     return;
   }
 

@@ -634,15 +634,29 @@ button.danger:hover { background: rgba(209,106,90,.12); }
 }
 .sessao-corpo:hover { background: none; filter: none; }
 
-/* Acoes do organizador dentro do card. O card nao tem padding (o poster
-   encosta na borda), entao o respiro vem daqui. */
+/* Acoes do organizador. Em grade de duas colunas porque podem ser quatro
+   botoes: em linha unica eles espremeriam o texto. */
 .acoes-evento {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: .4rem;
-  padding: 0 .7rem .7rem;
+  margin-top: .8rem;
 }
 .acoes-evento button { font-size: .78rem; padding: .4rem .5rem; width: 100%; }
+
+/* No card da vitrine o poster encosta na borda (o card nao tem padding),
+   entao o respiro das acoes precisa vir daqui. */
+.sessao-card .acoes-evento { margin-top: 0; padding: 0 .7rem .7rem; }
+
+/* Como a sessao terminou. Ganha cor propria porque, no historico, e a
+   primeira coisa que o organizador procura no card. */
+.estado {
+  margin: .5rem 0 0;
+  font-size: .78rem;
+  font-weight: 600;
+}
+.estado-encerrado { color: var(--accent); }
+.estado-cancelado { color: var(--error); }
 
 /* =========================================================
    Relatorio de encerramento
