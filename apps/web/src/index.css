@@ -418,3 +418,37 @@ button.danger:hover { background: rgba(209,106,90,.12); }
   display: inline-block;
   line-height: 0;
 }
+
+/* Acoes do evento: em grade, porque agora sao quatro botoes e em linha unica
+   eles espremeriam o texto. */
+.acoes-evento {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .4rem;
+  margin-top: .8rem;
+}
+.acoes-evento button { font-size: .78rem; padding: .4rem .5rem; width: 100%; }
+
+/* --- relatorio --- */
+.relatorio-numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: .7rem;
+  margin: 1.2rem 0;
+}
+.relatorio-item {
+  background: var(--surface-2);
+  border: 1px solid #3a3128;
+  border-radius: var(--radius);
+  padding: .8rem;
+  text-align: center;
+}
+.relatorio-item strong { display: block; font-size: 1.6rem; line-height: 1.1; }
+.relatorio-item span { font-size: .72rem; color: var(--muted); }
+/* O numero que o organizador procura primeiro: quantos entraram de fato. */
+.relatorio-item.destaque { border-color: var(--accent); }
+.relatorio-item.destaque strong { color: var(--accent); }
+
+.relatorio-tabela { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .88rem; }
+.relatorio-tabela td { padding: .5rem 0; border-bottom: 1px solid var(--surface-2); }
+.relatorio-tabela td:last-child { text-align: right; font-weight: 600; }

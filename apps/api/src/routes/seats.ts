@@ -45,6 +45,14 @@ seatsRouter.post("/hold", requireAuth, requireRole("CLIENT"), async (req, res) =
     res.status(404).json({ error: "Evento nao encontrado." });
     return;
   }
+  if (event.canceledAt) {
+    res.status(409).json({ error: "Esta sessao foi cancelada." });
+    return;
+  }
+  if (event.closedAt) {
+    res.status(409).json({ error: "Esta sessao ja foi encerrada." });
+    return;
+  }
 
   await liberarReservasVencidas(eventId);
 

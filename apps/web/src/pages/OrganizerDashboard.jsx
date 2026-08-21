@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
 import { Modal } from "../components/Modal";
+import { RelatorioEvento } from "../components/RelatorioEvento";
 
 export function OrganizerDashboard() {
   const { session, token } = useAuth();
@@ -25,6 +26,8 @@ export function OrganizerDashboard() {
   const [ocupado, setOcupado] = useState(false);
   const [roomRows, setRoomRows] = useState(8);
   const [roomSeatsPerRow, setRoomSeatsPerRow] = useState(12);
+
+  const [relatorio, setRelatorio] = useState(null);
 
   const [editandoId, setEditandoId] = useState(null);
   const [formEdicao, setFormEdicao] = useState(null);
@@ -77,6 +80,25 @@ export function OrganizerDashboard() {
     } catch (e) {
       setErroEdicao(e.message);
     }
+  }
+
+  async function verRelatorio(evento) {
+    setRelatorio(await api.relatorioDoEvento(token, evento.id));
+  }
+
+  async function encerrarEvento(evento) {
+    const aviso =
+      `Encerrar "${evento.title}"?
+
+` +
+      "A sessao para de aceitar compras e validacoes na portaria, e o " +
+      "relatorio final passa a ser definitivo.";
+
+    if (!window.confirm(aviso)) return;
+
+    await api.encerrarEvento(token, evento.id);
+    carregarMeusEventos();
+    verRelatorio(evento);
   }
 
   async function cancelarEvento(evento) {
@@ -345,6 +367,7 @@ export function OrganizerDashboard() {
               <h4>
                 {ev.title}{" "}
                 {ev.canceled && <span className="muted small">(cancelado)</span>}
+                {ev.closed && <span className="muted small">(encerrado)</span>}
               </h4>
               <p className="muted small">{ev.location}</p>
               <p className="muted small">
@@ -451,21 +474,42 @@ export function OrganizerDashboard() {
                 </div>
               ) : (
                 !ev.canceled && (
-                  <div className="button-row">
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => abrirEdicao(ev)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      className="danger"
-                      onClick={() => cancelarEvento(ev)}
-                    >
-                      Cancelar evento
-                    </button>
+                  <div className="acoes-evento">
+                    {/* Encerrada: so resta consultar o relatorio, que agora e
+                        definitivo. Editar ou cancelar deixaram de fazer
+                        sentido. */}
+                    {ev.closed ? (
+                      <button type="button" onClick={() => verRelatorio(ev)}>
+                        Ver relatorio
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => abrirEdicao(ev)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => verRelatorio(ev)}
+                        >
+                          Relatorio
+                        </button>
+                        <button type="button" onClick={() => encerrarEvento(ev)}>
+                          Encerrar
+                        </button>
+                        <button
+                          type="button"
+                          className="danger"
+                          onClick={() => cancelarEvento(ev)}
+                        >
+                          Cancelar
+                        </button>
+                      </>
+                    )}
                   </div>
                 )
               )}
@@ -473,6 +517,16 @@ export function OrganizerDashboard() {
           ))}
         </div>
       </section>
+
+      {relatorio && (
+        <Modal
+          titulo={`Relatorio: ${relatorio.evento.title}`}
+          onClose={() => setRelatorio(null)}
+          largura={560}
+        >
+          <RelatorioEvento dados={relatorio} />
+        </Modal>
+      )}
     </div>
   );
 }
