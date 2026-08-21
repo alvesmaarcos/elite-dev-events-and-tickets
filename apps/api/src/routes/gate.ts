@@ -12,6 +12,40 @@ const validateSchema = z.object({
   eventId: z.string().optional(),
 });
 
+/**
+ * Quantas entradas ja foram liberadas nesta sessao, e quantas sao esperadas.
+ *
+ * "Esperados" exclui os cancelados: quem cancelou nao vai aparecer na porta,
+ * entao conta-lo faria a portaria terminar a noite achando que faltou gente.
+ */
+async function contarPortaria(eventId?: string) {
+  if (!eventId) return undefined;
+
+  const [validados, esperados] = await Promise.all([
+    prisma.ticket.count({ where: { seat: { eventId }, status: "USED" } }),
+    prisma.ticket.count({
+      where: { seat: { eventId }, status: { not: "CANCELED" } },
+    }),
+  ]);
+
+  return { validados, esperados };
+}
+
+// A contagem da sessao, antes de qualquer leitura. Sem ela o painel da
+// portaria so ganharia numero depois do primeiro ingresso -- e quem abre a
+// porta quer saber de quantas pessoas esta esperando desde o inicio.
+gateRouter.get("/metricas/:eventId", requireAuth, requireRole("GATE"), async (req, res) => {
+  const eventId = String(req.params.eventId);
+
+  const event = await prisma.event.findUnique({ where: { id: eventId } });
+  if (!event) {
+    res.status(404).json({ error: "Sessao nao encontrada." });
+    return;
+  }
+
+  res.json(await contarPortaria(eventId));
+});
+
 gateRouter.post("/validate", requireAuth, requireRole("GATE"), async (req, res) => {
   const parsed = validateSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -55,8 +89,23 @@ gateRouter.post("/validate", requireAuth, requireRole("GATE"), async (req, res) 
     parsed.data.eventId
   );
 
+  // A sessao de onde o ingresso REALMENTE e. Vai junto de toda recusa: sem
+  // isso, "ingresso de outra sessao" manda a pessoa embora sem dizer para
+  // onde ela deveria ir -- e quem esta na portaria nao tem como ajudar.
+  const ingressoDe = {
+    eventId: ticket.seat.eventId,
+    title: ticket.seat.event.title,
+    date: ticket.seat.event.date,
+    location: ticket.seat.event.location,
+    seatLabel: ticket.seat.label,
+  };
+
   if (decisao.result !== "VALIDO") {
-    res.json(decisao);
+    res.json({
+      ...decisao,
+      ingressoDe,
+      metricas: await contarPortaria(parsed.data.eventId),
+    });
     return;
   }
 
@@ -80,5 +129,9 @@ gateRouter.post("/validate", requireAuth, requireRole("GATE"), async (req, res) 
     result: "VALIDO",
     event: ticket.seat.event.title,
     seatLabel: ticket.seat.label,
+    ingressoDe,
+    // Contado DEPOIS da marcacao: a leitura que acabou de acontecer ja
+    // aparece no numero que a portaria ve na tela.
+    metricas: await contarPortaria(parsed.data.eventId),
   });
 });
