@@ -87,7 +87,8 @@ export function Gate() {
     <div className="page page-narrow">
       <h1>Portaria</h1>
       <p className="muted">
-        Leia o QR pela camera ou digite o codigo do ingresso.
+        Leia o QR pela camera, ou cole abaixo o codigo do ingresso (tambem
+        funciona colar o link de compartilhamento inteiro).
       </p>
 
       <div className="button-row">
@@ -106,8 +107,12 @@ export function Gate() {
         }}
       >
         <label>
-          Codigo do ingresso
-          <input value={codigo} onChange={(e) => setCodigo(e.target.value)} />
+          Codigo ou link do ingresso
+          <input
+            value={codigo}
+            placeholder="921e784c-... ou http://.../ingresso/921e784c-..."
+            onChange={(e) => setCodigo(e.target.value)}
+          />
         </label>
         <button type="submit" disabled={ocupado}>
           {ocupado ? "Validando..." : "Validar"}

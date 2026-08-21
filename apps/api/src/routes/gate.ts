@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole } from "../middleware/auth";
 import { parseQrPayload, verifySignature } from "../lib/qr";
-import { decideGateResult } from "../domain/gate";
+import { decideGateResult, normalizeGateInput } from "../domain/gate";
 
 export const gateRouter = Router();
 
@@ -19,9 +19,10 @@ gateRouter.post("/validate", requireAuth, requireRole("GATE"), async (req, res) 
     return;
   }
 
-  // A camera entrega "codigo.assinatura"; a digitacao manual entrega so o
-  // codigo. Esta linha atende aos dois formatos.
-  const bruto = parsed.data.payload.trim();
+  // A camera entrega "codigo.assinatura", a digitacao manual entrega so o
+  // codigo, e quem cola o link de compartilhamento entrega uma URL inteira.
+  // O normalize reduz os tres casos ao mesmo formato.
+  const bruto = normalizeGateInput(parsed.data.payload);
   const partes = parseQrPayload(bruto);
   const code = partes ? partes.code : bruto;
 
