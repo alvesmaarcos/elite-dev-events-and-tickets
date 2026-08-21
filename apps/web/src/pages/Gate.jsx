@@ -60,7 +60,7 @@ export function Gate() {
     // Importacao dinamica: a biblioteca so e baixada quando alguem clica em
     // "Ler com camera". Nao faz sentido todo cliente baixa-la ao abrir a
     // lista de eventos.
-    import("html5-qrcode").then(({ Html5QrcodeScanner }) => {
+    import("html5-qrcode").then(({ Html5QrcodeScanner, Html5QrcodeSupportedFormats }) => {
       if (cancelado) return;
 
       const leitor = new Html5QrcodeScanner(
@@ -83,6 +83,11 @@ export function Gate() {
 
           rememberLastUsedCamera: true,
           showTorchButtonIfSupported: true, // lanterna, util na entrada a noite
+
+          // So procurar QR, em vez de tentar todos os formatos de codigo de
+          // barras. Acelera bastante a deteccao -- o que importa quando o
+          // QR esta na tela de outro celular, com brilho e reflexo.
+          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
         },
         false
       );
