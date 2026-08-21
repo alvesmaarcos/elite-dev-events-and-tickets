@@ -7,6 +7,7 @@ import { EventDetail } from "./pages/EventDetail";
 import { OrganizerDashboard } from "./pages/OrganizerDashboard";
 import { MyTickets } from "./pages/MyTickets";
 import { Gate } from "./pages/Gate";
+import { Store } from "./pages/Store";
 import { SharedTicket } from "./pages/SharedTicket";
 
 function Nav() {
@@ -25,12 +26,15 @@ function Nav() {
       <nav>
         {/* A portaria nao compra ingresso: a vitrine so tiraria espaco do
             unico link que ela usa. */}
-        {session?.role !== "GATE" && <Link to="/filmes">Em cartaz</Link>}
+        {!["GATE", "STORE"].includes(session?.role) && (
+          <Link to="/filmes">Em cartaz</Link>
+        )}
         {session?.role === "CLIENT" && (
           <Link to="/meus-ingressos">Meus ingressos</Link>
         )}
         {session?.role === "ORGANIZER" && <Link to="/organizador">Painel</Link>}
         {session?.role === "GATE" && <Link to="/portaria">Portaria</Link>}
+        {session?.role === "STORE" && <Link to="/loja">Loja</Link>}
       </nav>
 
       <div>
@@ -62,6 +66,7 @@ export default function App() {
           <Route path="/organizador" element={<OrganizerDashboard />} />
           <Route path="/meus-ingressos" element={<MyTickets />} />
           <Route path="/portaria" element={<Gate />} />
+          <Route path="/loja" element={<Store />} />
           <Route path="/ingresso/:code" element={<SharedTicket />} />
           <Route path="/login" element={<Login />} />
         </Routes>

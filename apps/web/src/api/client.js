@@ -90,10 +90,23 @@ export const api = {
       token,
     }),
     
-    confirmarPagamento: (token, eventId, seatLabels, outcome) =>
+    confirmarPagamento: (token, eventId, seatLabels, outcome, items = []) =>
       request("/reservations", {
         method: "POST",
-        body: { eventId, seatLabels, outcome },
+        body: { eventId, seatLabels, outcome, items },
+        token,
+      }),
+
+    // --- lojinha ---
+    cardapio: (token) => request("/store/products", { token }),
+
+    lojaBuscarPedido: (token, payload) =>
+      request("/store/lookup", { method: "POST", body: { payload }, token }),
+
+    lojaEntregarPedido: (token, reservationId) =>
+      request("/store/deliver", {
+        method: "POST",
+        body: { reservationId },
         token,
       }),
 

@@ -4,6 +4,7 @@ import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole } from "../middleware/auth";
 import { parseQrPayload, verifySignature } from "../lib/qr";
 import { decideGateResult } from "../domain/gate";
+import { descreverOpcao } from "./store";
 
 export const gateRouter = Router();
 
@@ -61,7 +62,10 @@ gateRouter.post("/validate", requireAuth, requireRole("GATE"), async (req, res) 
 
   const ticket = await prisma.ticket.findUnique({
     where: { code },
-    include: { seat: { include: { event: true } } },
+    include: {
+      seat: { include: { event: true } },
+      reservation: { include: { items: { include: { product: true } } } },
+    },
   });
 
   if (!ticket) {
@@ -92,6 +96,21 @@ gateRouter.post("/validate", requireAuth, requireRole("GATE"), async (req, res) 
   // A sessao de onde o ingresso REALMENTE e. Vai junto de toda recusa: sem
   // isso, "ingresso de outra sessao" manda a pessoa embora sem dizer para
   // onde ela deveria ir -- e quem esta na portaria nao tem como ajudar.
+  // O combo comprado junto. A portaria nao entrega nada -- so avisa, porque
+  // quem entra na sala sem passar na loja esquece a pipoca que ja pagou.
+  const pendentes = ticket.reservation.items.filter((i) => !i.deliveredAt);
+
+  const combo = pendentes.length
+    ? {
+        pendentes: pendentes.length,
+        itens: pendentes.map((item) => ({
+          nome: item.product.name,
+          opcao: descreverOpcao(item.option),
+          quantidade: item.quantity,
+        })),
+      }
+    : undefined;
+
   const ingressoDe = {
     eventId: ticket.seat.eventId,
     title: ticket.seat.event.title,
@@ -130,6 +149,7 @@ gateRouter.post("/validate", requireAuth, requireRole("GATE"), async (req, res) 
     event: ticket.seat.event.title,
     seatLabel: ticket.seat.label,
     ingressoDe,
+    combo,
     // Contado DEPOIS da marcacao: a leitura que acabou de acontecer ja
     // aparece no numero que a portaria ve na tela.
     metricas: await contarPortaria(parsed.data.eventId),

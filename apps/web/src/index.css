@@ -888,3 +888,141 @@ button.danger:hover { background: rgba(209,106,90,.12); }
   border-radius: 6px;
 }
 .gate-outra-sessao p { margin: .15rem 0; }
+
+/* =========================================================
+   Lojinha: combo no checkout, balcao e retirada
+   ========================================================= */
+
+.combo-caixa {
+  margin: 1rem 0;
+  padding: .8rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+}
+.combo-caixa > summary {
+  cursor: pointer;
+  font-weight: 600;
+  list-style: revert;
+}
+.combo-caixa > summary .price { font-weight: 700; }
+
+.combo-grupo { margin-top: 1rem; }
+.combo-grupo h4 {
+  margin: 0 0 .5rem;
+  font-size: .75rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.combo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .8rem;
+  padding: .45rem 0;
+  border-bottom: 1px solid var(--surface-2);
+}
+.combo-item:last-child { border-bottom: none; }
+
+.combo-descricao {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+  min-width: 0;
+}
+.combo-descricao select {
+  margin-top: .2rem;
+  max-width: 15rem;
+  background: var(--surface-2);
+  border: 1px solid #3a3128;
+  border-radius: 6px;
+  padding: .3rem .4rem;
+  color: var(--ink);
+  font-size: .8rem;
+  font-family: inherit;
+}
+
+/* Botoes pequenos e quadrados: o par -/+ precisa parecer um controle unico,
+   e nao duas acoes independentes. */
+.combo-controle {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex-shrink: 0;
+}
+.combo-controle button {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.combo-quantidade {
+  min-width: 1.4rem;
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.combo-resumo {
+  margin: .8rem 0 0;
+  padding-left: 1.1rem;
+  font-size: .9rem;
+}
+
+.total-final { margin-top: .8rem; font-size: 1.05rem; }
+.total-final .price { font-size: 1.15rem; }
+
+/* --- lista de itens do pedido (balcao e "meus ingressos") --- */
+.lista-combo {
+  list-style: none;
+  margin: .6rem 0 0;
+  padding: 0;
+}
+.lista-combo li {
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+  padding: .4rem 0;
+  border-bottom: 1px solid var(--surface-2);
+}
+.lista-combo li:last-child { border-bottom: none; }
+
+/* Item ja retirado continua visivel, riscado: some a duvida de "sera que eu
+   entreguei?" sem esconder o historico do pedido. */
+.lista-combo li.entregue { color: var(--muted); text-decoration: line-through; }
+.lista-combo li.entregue .muted { text-decoration: none; }
+
+.combo-qtd {
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.combo-comprado {
+  margin: .6rem 0 1rem;
+  padding: .8rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+}
+.combo-comprado p { margin: 0; }
+
+/* Aviso da portaria: o combo esperando na loja. */
+.gate-combo {
+  margin-top: .8rem;
+  padding: .6rem;
+  background: rgba(0, 0, 0, .22);
+  border-radius: 6px;
+}
+.gate-combo p { margin: .1rem 0; }
+
+.relatorio-tabela tr.linha-total td {
+  border-bottom: none;
+  border-top: 1px solid var(--accent);
+  padding-top: .6rem;
+  color: var(--accent);
+}

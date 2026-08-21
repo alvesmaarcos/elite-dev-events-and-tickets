@@ -122,6 +122,31 @@ export function MyTickets() {
             {new Date(reserva.event.date).toLocaleString("pt-BR")}
           </p>
 
+          {reserva.itens?.length > 0 && (
+            <div className="combo-comprado">
+              <p className="small">
+                <strong>Combo para retirar na loja</strong> — apresente o mesmo
+                QR do ingresso.
+              </p>
+              <ul className="lista-combo">
+                {reserva.itens.map((item) => (
+                  <li key={item.id} className={item.entregueEm ? "entregue" : ""}>
+                    <span className="combo-qtd">{item.quantidade}x</span>
+                    <span>
+                      {item.nome}
+                      {item.opcao && (
+                        <em className="muted small"> — {item.opcao}</em>
+                      )}
+                    </span>
+                    {item.entregueEm && (
+                      <span className="muted small">retirado</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="grid">
             {reserva.tickets.map((ingresso) => (
               <div key={ingresso.id} className="card ticket-card">
