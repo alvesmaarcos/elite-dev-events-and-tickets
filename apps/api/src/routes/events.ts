@@ -31,14 +31,19 @@ eventsRouter.get("/", async (req, res) => {
   const q = String(req.query.q || "").trim();
 
   const events = await prisma.event.findMany({
-    where: q
-      ? {
-          OR: [
-            { title: { contains: q, mode: "insensitive" } },
-            { location: { contains: q, mode: "insensitive" } },
-          ],
-        }
-      : undefined,
+    where: {
+      // Evento cancelado some da vitrine publica -- mas continua visivel
+      // para o organizador, em /mine/list.
+      canceledAt: null,
+      ...(q
+        ? {
+            OR: [
+              { title: { contains: q, mode: "insensitive" as const } },
+              { location: { contains: q, mode: "insensitive" as const } },
+            ],
+          }
+        : {}),
+    },
     orderBy: { date: "asc" },
   });
 
@@ -60,16 +65,26 @@ eventsRouter.get("/mine/list", requireAuth, requireRole("ORGANIZER"), async (req
     where: { organizerId: req.user!.id },
     orderBy: { date: "asc" },
   });
-  res.json(events);
-});
 
-eventsRouter.get("/:id", async (req, res) => {
-  const event = await prisma.event.findUnique({ where: { id: String(req.params.id) } });
-  if (!event) {
-    res.status(404).json({ error: "Evento nao encontrado." });
-    return;
-  }
-  res.json(event);
+  // hasSold e o que permite a tela ESCONDER os campos restritos, em vez de
+  // deixar o organizador preencher e tomar um 409 depois.
+  const resultado = await Promise.all(
+    events.map(async (evento) => {
+      const comDados = await comDisponibilidade(evento);
+
+      const vendidos = await prisma.seat.count({
+        where: { eventId: evento.id, status: "SOLD" },
+      });
+
+      return {
+        ...comDados,
+        hasSold: vendidos > 0,
+        canceled: Boolean(evento.canceledAt),
+      };
+    })
+  );
+
+  res.json(resultado);
 });
 
 eventsRouter.get("/:id/seats", optionalAuth, async (req, res) => {
@@ -165,3 +180,143 @@ eventsRouter.post("/", requireAuth, requireRole("ORGANIZER"), async (req, res) =
 });
 
 eventsRouter.use("/:eventId/seats", seatsRouter);
+
+// ---------------------------------------------------------------------------
+// Gestao do evento pelo organizador
+// ---------------------------------------------------------------------------
+
+const editEventSchema = z.object({
+  title: z.string().min(2).optional(),
+  description: z.string().optional(),
+  date: z.coerce.date().optional(),
+  location: z.string().min(2).optional(),
+  price: z.coerce.number().nonnegative().optional(),
+  roomRows: z.coerce.number().int().positive().max(26).optional(),
+  roomSeatsPerRow: z.coerce.number().int().positive().max(60).optional(),
+});
+
+// Lista de PERMITIDOS, nao de proibidos: quando o evento ganhar campos novos
+// no futuro, eles ja nascem restritos depois da primeira venda. Uma lista de
+// proibidos precisaria ser lembrada e atualizada a cada campo novo.
+const CAMPOS_SEMPRE_EDITAVEIS = ["date", "location", "description"];
+
+eventsRouter.patch("/:id", requireAuth, requireRole("ORGANIZER"), async (req, res) => {
+  const event = await prisma.event.findUnique({ where: { id: String(req.params.id) } });
+
+  if (!event) {
+    res.status(404).json({ error: "Evento nao encontrado." });
+    return;
+  }
+  if (event.organizerId !== req.user!.id) {
+    res.status(403).json({ error: "Voce nao organiza este evento." });
+    return;
+  }
+  if (event.canceledAt) {
+    res.status(409).json({ error: "Evento cancelado nao pode ser editado." });
+    return;
+  }
+
+  const parsed = editEventSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({
+      error: "Dados invalidos.",
+      detalhes: parsed.error.issues.map((p) => ({
+        campo: p.path.join(".") || "(corpo da requisicao)",
+        motivo: p.message,
+      })),
+    });
+    return;
+  }
+
+  const vendidos = await prisma.seat.count({
+    where: { eventId: event.id, status: "SOLD" },
+  });
+
+  const camposEnviados = Object.keys(parsed.data);
+  const mexeEmCampoRestrito = camposEnviados.some(
+    (campo) => !CAMPOS_SEMPRE_EDITAVEIS.includes(campo)
+  );
+
+  // Depois que alguem pagou, mudar preco ou encolher a sala quebraria a
+  // expectativa de quem comprou -- a poltrona dele poderia ate deixar de
+  // existir. A regra protege o cliente, nao o codigo.
+  if (vendidos > 0 && mexeEmCampoRestrito) {
+    res.status(409).json({
+      error: "Ja ha ingressos vendidos: so e possivel alterar data, local e descricao.",
+    });
+    return;
+  }
+
+  const { roomRows, roomSeatsPerRow, ...demais } = parsed.data;
+  const mudouASala = roomRows !== undefined || roomSeatsPerRow !== undefined;
+
+  const atualizado = await prisma.$transaction(async (tx) => {
+    await tx.event.update({ where: { id: event.id }, data: demais });
+
+    if (mudouASala) {
+      const linhas = roomRows ?? event.roomRows;
+      const porFileira = roomSeatsPerRow ?? event.roomSeatsPerRow;
+
+      // Só chega aqui se NAO ha vendas (a regra acima ja garantiu), entao
+      // nao ha nada a preservar: recriar e mais simples e mais confiavel do
+      // que calcular quais poltronas acrescentar ou remover.
+      await tx.seat.deleteMany({ where: { eventId: event.id } });
+      await tx.seat.createMany({
+        data: buildSeatGrid(linhas, porFileira).map((assento) => ({
+          ...assento,
+          eventId: event.id,
+        })),
+      });
+
+      return tx.event.update({
+        where: { id: event.id },
+        data: { roomRows: linhas, roomSeatsPerRow: porFileira },
+      });
+    }
+
+    return tx.event.findUniqueOrThrow({ where: { id: event.id } });
+  });
+
+  res.json(await comDisponibilidade(atualizado));
+});
+
+eventsRouter.post("/:id/cancel", requireAuth, requireRole("ORGANIZER"), async (req, res) => {
+  const event = await prisma.event.findUnique({ where: { id: String(req.params.id) } });
+
+  if (!event) {
+    res.status(404).json({ error: "Evento nao encontrado." });
+    return;
+  }
+  if (event.organizerId !== req.user!.id) {
+    res.status(403).json({ error: "Voce nao organiza este evento." });
+    return;
+  }
+  if (event.canceledAt) {
+    res.status(409).json({ error: "Este evento ja esta cancelado." });
+    return;
+  }
+
+  const agora = new Date();
+
+  // As tres operacoes juntas: um evento marcado como cancelado com ingressos
+  // ainda validos deixaria a portaria liberando entrada para uma sessao que
+  // nao vai acontecer.
+  await prisma.$transaction([
+    prisma.event.update({
+      where: { id: event.id },
+      data: { canceledAt: agora },
+    }),
+    // status VALID no filtro: ingressos ja utilizados ficam como estao. A
+    // pessoa entrou; reescrever a historia dela seria errado.
+    prisma.ticket.updateMany({
+      where: { seat: { eventId: event.id }, status: "VALID" },
+      data: { status: "CANCELED", canceledAt: agora },
+    }),
+    prisma.seat.updateMany({
+      where: { eventId: event.id },
+      data: { status: "AVAILABLE", holdExpiresAt: null, holdByUserId: null },
+    }),
+  ]);
+
+  res.json({ ok: true });
+});

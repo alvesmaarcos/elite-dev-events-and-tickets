@@ -188,3 +188,12 @@ button.link {
   font-size: .7rem;
   text-align: center;
 }
+
+/* Acao destrutiva com aparencia distinta: o vermelho contornado sinaliza
+   "pense antes" sem gritar como um botao vermelho solido. */
+button.danger {
+  background: transparent;
+  border: 1px solid var(--error);
+  color: var(--error);
+}
+button.danger:hover { background: rgba(209,106,90,.12); }

@@ -10,12 +10,18 @@
  * servidor. Ver gate.test.ts.
  */
 
-export type GateResultCode = "VALIDO" | "JA_UTILIZADO" | "EVENTO_ERRADO";
+export type GateResultCode =
+  | "VALIDO"
+  | "JA_UTILIZADO"
+  | "EVENTO_ERRADO"
+  | "CANCELADO"
+  | "EVENTO_CANCELADO";
 
 export interface GateTicketInput {
   status: "VALID" | "USED" | "CANCELED";
   usedAt: Date | null;
   eventId: string;
+  eventCanceledAt: Date | null;
 }
 
 export interface GateDecision {
@@ -33,6 +39,17 @@ export function decideGateResult(
   // utilizado" mandaria a pessoa discutir com o porteiro errado.
   if (requestedEventId && ticket.eventId !== requestedEventId) {
     return { result: "EVENTO_ERRADO", reason: "Este ingresso e de outra sessao." };
+  }
+
+  // Antes de falar do ingresso, fala da sessao: se o evento inteiro caiu,
+  // dizer "seu ingresso foi cancelado" faria a pessoa achar que o problema e
+  // dela, quando na verdade todo mundo esta na mesma situacao.
+  if (ticket.eventCanceledAt) {
+    return { result: "EVENTO_CANCELADO", reason: "Esta sessao foi cancelada." };
+  }
+
+  if (ticket.status === "CANCELED") {
+    return { result: "CANCELADO", reason: "Este ingresso foi cancelado." };
   }
 
   if (ticket.status === "USED") {

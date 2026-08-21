@@ -46,6 +46,9 @@ model Event {
   roomSeatsPerRow Int
   seats           Seat[]
   reservations Reservation[]
+  // Guardamos a DATA, nao um boolean: se esta vazio nao foi cancelado, se
+  // esta preenchido foi cancelado E sabemos quando. Mesmo padrao do usedAt.
+  canceledAt      DateTime?
 }
 
 enum SeatStatus {
@@ -95,5 +98,6 @@ model Ticket {
   signature     String
   status        TicketStatus @default(VALID)
   usedAt        DateTime?
+  canceledAt    DateTime?
   createdAt     DateTime     @default(now())
 }

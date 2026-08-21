@@ -18,11 +18,69 @@ export function OrganizerDashboard() {
   const [roomRows, setRoomRows] = useState(8);
   const [roomSeatsPerRow, setRoomSeatsPerRow] = useState(12);
 
+  const [editandoId, setEditandoId] = useState(null);
+  const [formEdicao, setFormEdicao] = useState(null);
+  const [erroEdicao, setErroEdicao] = useState(null);
+
   function carregarMeusEventos() {
     if (token) api.myEvents(token).then(setMeusEventos);
   }
 
   useEffect(carregarMeusEventos, [token]);
+
+  function abrirEdicao(evento) {
+    setEditandoId(evento.id);
+    setErroEdicao(null);
+    setFormEdicao({
+      // slice(0, 16) corta a data para o formato que o datetime-local espera
+      date: new Date(evento.date).toISOString().slice(0, 16),
+      location: evento.location,
+      description: evento.description || "",
+      price: evento.price,
+      roomRows: evento.roomRows,
+      roomSeatsPerRow: evento.roomSeatsPerRow,
+    });
+  }
+
+  async function salvarEdicao(evento) {
+    setErroEdicao(null);
+
+    const base = {
+      date: new Date(formEdicao.date).toISOString(),
+      location: formEdicao.location,
+      description: formEdicao.description,
+    };
+
+    // Depois da primeira venda, nem enviamos os campos restritos -- o back
+    // recusaria com 409 de qualquer forma.
+    const payload = evento.hasSold
+      ? base
+      : {
+          ...base,
+          price: Number(formEdicao.price),
+          roomRows: Number(formEdicao.roomRows),
+          roomSeatsPerRow: Number(formEdicao.roomSeatsPerRow),
+        };
+
+    try {
+      await api.atualizarEvento(token, evento.id, payload);
+      setEditandoId(null);
+      carregarMeusEventos();
+    } catch (e) {
+      setErroEdicao(e.message);
+    }
+  }
+
+  async function cancelarEvento(evento) {
+    const aviso =
+      `Cancelar "${evento.title}"?\n\n` +
+      "Todos os ingressos emitidos serao invalidados e as poltronas liberadas.";
+
+    if (!window.confirm(aviso)) return;
+
+    await api.cancelarEvento(token, evento.id);
+    carregarMeusEventos();
+  }
 
   async function buscarNoCatalogo(e) {
     e.preventDefault();
@@ -174,12 +232,133 @@ export function OrganizerDashboard() {
         <div className="grid">
           {meusEventos.map((ev) => (
             <div key={ev.id} className="card">
-              <h4>{ev.title}</h4>
+              <h4>
+                {ev.title}{" "}
+                {ev.canceled && <span className="muted small">(cancelado)</span>}
+              </h4>
               <p className="muted small">{ev.location}</p>
               <p className="muted small">
-              <p className="muted small">{ev.available}/{ev.capacity} disponiveis</p>
                 {new Date(ev.date).toLocaleString("pt-BR")}
               </p>
+              <p className="muted small">
+                {ev.available}/{ev.capacity} disponiveis
+              </p>
+
+              {editandoId === ev.id ? (
+                <div className="form">
+                  <label>
+                    Data e hora
+                    <input
+                      type="datetime-local"
+                      value={formEdicao.date}
+                      onChange={(e) =>
+                        setFormEdicao({ ...formEdicao, date: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Local
+                    <input
+                      value={formEdicao.location}
+                      onChange={(e) =>
+                        setFormEdicao({ ...formEdicao, location: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Descricao
+                    <input
+                      value={formEdicao.description}
+                      onChange={(e) =>
+                        setFormEdicao({ ...formEdicao, description: e.target.value })
+                      }
+                    />
+                  </label>
+
+                  {ev.hasSold ? (
+                    <p className="muted small">
+                      Ja ha ingressos vendidos: preco e tamanho da sala nao podem
+                      mais mudar.
+                    </p>
+                  ) : (
+                    <>
+                      <label>
+                        Preco (R$)
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={formEdicao.price}
+                          onChange={(e) =>
+                            setFormEdicao({ ...formEdicao, price: e.target.value })
+                          }
+                        />
+                      </label>
+                      <label>
+                        Fileiras
+                        <input
+                          type="number"
+                          min={1}
+                          max={26}
+                          value={formEdicao.roomRows}
+                          onChange={(e) =>
+                            setFormEdicao({ ...formEdicao, roomRows: e.target.value })
+                          }
+                        />
+                      </label>
+                      <label>
+                        Assentos por fileira
+                        <input
+                          type="number"
+                          min={1}
+                          max={60}
+                          value={formEdicao.roomSeatsPerRow}
+                          onChange={(e) =>
+                            setFormEdicao({
+                              ...formEdicao,
+                              roomSeatsPerRow: e.target.value,
+                            })
+                          }
+                        />
+                      </label>
+                    </>
+                  )}
+
+                  {erroEdicao && <p className="error">{erroEdicao}</p>}
+
+                  <div className="button-row">
+                    <button type="button" onClick={() => salvarEdicao(ev)}>
+                      Salvar
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => setEditandoId(null)}
+                    >
+                      Cancelar edicao
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                !ev.canceled && (
+                  <div className="button-row">
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => abrirEdicao(ev)}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      className="danger"
+                      onClick={() => cancelarEvento(ev)}
+                    >
+                      Cancelar evento
+                    </button>
+                  </div>
+                )
+              )}
             </div>
           ))}
         </div>

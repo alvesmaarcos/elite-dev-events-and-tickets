@@ -7,6 +7,8 @@ const estilo = {
   INVALIDO: "gate-erro",
   JA_UTILIZADO: "gate-alerta",
   EVENTO_ERRADO: "gate-alerta",
+  CANCELADO: "gate-alerta",
+  EVENTO_CANCELADO: "gate-alerta",
 };
 
 const rotulo = {
@@ -14,6 +16,8 @@ const rotulo = {
   INVALIDO: "Ingresso invalido",
   JA_UTILIZADO: "Ingresso ja utilizado",
   EVENTO_ERRADO: "Ingresso de outra sessao",
+  CANCELADO: "Ingresso cancelado",
+  EVENTO_CANCELADO: "Sessao cancelada",
 };
 
 export function Gate() {
